@@ -538,6 +538,26 @@ button { cursor:pointer; }
     height: 96px !important;
   }
 }
+/* New: make both tablet portrait and landscape panels the same - 30% width
+   This covers typical tablet ranges including iPad and iPad Pro and will
+   override earlier percentage rules so both orientations look consistent. */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .main-container > div[style*="display:flex"] > div {
+    flex: 0 0 30% !important;
+    max-width: calc(30% - 12px) !important;
+    box-sizing: border-box !important;
+    padding: 8px !important;
+  }
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 86% !important;
+    margin: 6px auto !important;
+    display: block !important;
+  }
+  .main-container > div[style*="display:flex"] > div .image-preview-item {
+    width: 88px !important;
+    height: 88px !important;
+  }
+}
 /* Final override: make colored panels size flexibly with .main-container
    - Two columns when there's room, each using roughly half the container (minus gap)
    - Collapse to full-width on small screens
