@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teachermath Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* {
+  font-family: 'Roboto', sans-serif !important;
+}
+body {
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
+  z-index: -1;
+}
+input, button { font-size:16px; margin:5px; padding:10px; text-transform: lowercase; border-radius:15px; border:2px solid #ccc; }
+textarea {
+  font-size:16px; margin:5px; padding:10px; width:250px; height:120px; resize:none;
+  border:2px solid #ccc; border-radius:15px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #fff,
+    #fff 28px,
+    #ccc 28px,
+    #ccc 30px
+  );
+  line-height:30px;
+  text-transform: lowercase; /* พิมพ์อะไรก็เป็นตัวเล็ก */
+}
+button { cursor:pointer; }
+.image-preview-item {
+  display: inline-block;
+  margin: 10px;
+  position: relative;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 120px;
+  height: 120px;
+  background: repeating-conic-gradient(#ddd 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+}
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.image-preview-item .remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.file-input-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 10px;
+}
+.file-input-wrapper input[type=file] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.neon-btn-green, .file-input-label {
+  background: linear-gradient(180deg, #57e167 0%, #57e167 45%, #57e167 55%, #57e167 100%);
+  color: #000000;
+  border: 6px solid #74640a;
+  border-radius: 9999px;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+  z-index: 10;
+  min-height: 55px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* Neon Button Style */
+.neon-btn, .file-input-label {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  color: #000000;
+  border: 6px solid #74640a;
+  border-radius: 9999px;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+  z-index: 10;
+  min-height: 55px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.neon-btn:hover, .file-input-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0 #000, -10px 8px #3b3305, 0 0 25px rgba(255,230,160,0.75);
+}
+
+.file-input-label {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+.choice-item {
+  background: #f0f0f0;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.choice-item button {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Responsive Design */
+.info-inputs {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin: 10px 0 20px 0;
+  flex-wrap: wrap;
+}
+
+.info-inputs input {
+  width: 120px;
+  font-size: 16px;
+  padding: 10px;
+  border-radius: 15px;
+}
+
+.info-inputs input:nth-child(1) {
+  width: 120px;
+}
+
+.info-inputs input:nth-child(2),
+.info-inputs input:nth-child(3),
+.info-inputs input:nth-child(4) {
+  width: 180px;
+}
+
+.main-container {
+  max-width: 900px;
+  width: 100%;
+  background: rgba(255,255,255,0.9);
+  padding: 20px;
+  border-radius: 10px;
+  border: 4px solid #74640a;
+  box-shadow: 0 0 15px rgba(255,230,160,0.5), 1px 1px 0 #000, -6px 4px #3b3305;
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+  body {
+    padding: 5px;
+  }
+  
+  h2 {
+    font-size: 18px;
+    margin: 10px 0;
+  }
+  
+  h3 {
+    font-size: 16px;
+    margin: 10px 0;
+  }
+  
+  .info-section {
+  padding: 10px 15px !important;
+  max-width: 91% !important;
+  width: 91% !important;
+    border: 3px solid #74640a !important;
+    box-sizing: border-box !important;
+    margin: 5px auto !important;
+  }
+  
+  .info-inputs {
+    gap: 3px;
+  }
+  
+  .info-inputs input {
+    width: calc(50% - 3px) !important;
+    font-size: 12px !important;
+    padding: 6px !important;
+    box-sizing: border-box;
+  }
+  
+  .main-container {
+    padding: 6px;
+    max-width: 85%;
+    width: 85%;
+    border: 3px solid #74640a;
+  }
+  
+  .main-container input {
+    font-size: 14px !important;
+    padding: 6px !important;
+    max-width: 100% !important;
+  }
+  
+  .main-container label {
+    font-size: 12px !important;
+  }
+  
+  .main-container > div[style*="display:flex"] {
+    flex-direction: column;
+    gap: 6px !important;
+  }
+  
+  .main-container > div[style*="display:flex"] > div {
+    width: calc(100% - 4px) !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    margin: 0 2px !important;
+  }
+  
+  .main-container > div[style*="display:flex"] > div input {
+    max-width: calc(100% - 4px) !important;
+    width: calc(100% - 4px) !important;
+    box-sizing: border-box !important;
+  }
+  
+  .neon-btn, .neon-btn-green {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    min-height: 35px !important;
+  }
+}
+
+/* Tablet: 768px - 1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .info-inputs input:nth-child(1) {
+    width: 100px;
+  }
+  
+  .info-inputs input:nth-child(2),
+  .info-inputs input:nth-child(3),
+  .info-inputs input:nth-child(4) {
+    width: 150px;
+  }
+}
+
+/* Desktop: > 1024px */
+@media (min-width: 1025px) {
+  .info-inputs input:nth-child(1) {
+    width: 120px;
+  }
+  
+  .info-inputs input:nth-child(2),
+  .info-inputs input:nth-child(3),
+  .info-inputs input:nth-child(4) {
+    width: 180px;
+  }
+}
+
+.info-section {
+  background: rgba(255,255,255,0.9);
+  padding: 20px;
+  border-radius: 10px;
+  border: 4px solid #74640a;
+  box-shadow: 0 0 15px rgba(255,230,160,0.5), 1px 1px 0 #000, -6px 4px #3b3305;
+  margin-bottom: 20px;
+  max-width: 900px;
+  width: 100%;
+}
+
+.info-section h2 {
+  margin-top: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="info-section">
+  <h3>กรอกข้อมูลกิจกรรม</h3>
+  
+  <div class="info-inputs">
+    <input id="weekInput" placeholder="สัปดาห์ที่">
+    <input id="topicInput" placeholder="สาระการเรียนรู้">
+    <input id="unitInput" placeholder="หน่วยการเรียนรู้">
+    <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
+  </div>
+</div>
+
+<div class="main-container">
+  <h3>เพิ่มโจทย์คณิตศาสตร์</h3>
+  <input id="questionInput" placeholder="พิมพ์โจทย์เลข (เช่น 2 + 2 = ?)" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:20px;"><br>
+  <div style="display:flex; gap:5px; justify-content:center; margin-top:20px;">
+    <div style="flex:1; background:rgba(76, 175, 80, 0.1); padding:15px; border-radius:10px; border:2px solid #4CAF50;">
+      <label style="color:#4CAF50; font-weight:bold;">คำตอบที่ถูกต้อง ✅</label><br>
+      <input id="correctAnswerInput" placeholder="กรอกคำตอบถูก (เช่น 4)" style="max-width:300px; font-size:18px; padding:10px; margin:10px 0; border-radius:15px;">
+      <button class="neon-btn" onclick="addAnswer('correct')" style="font-size:14px; padding:8px 16px; min-height:40px;">เพิ่มคำตอบ</button>
+      <div id="correctAnswersList" style="margin-top:10px;"></div>
+    </div>
+    
+    <div style="flex:1; background:rgba(244, 67, 54, 0.1); padding:15px; border-radius:10px; border:2px solid #f44336;">
+      <label style="color:#f44336; font-weight:bold;">คำตอบที่ผิด ❌</label><br>
+      <input id="wrongAnswerInput" placeholder="กรอกคำตอบผิด (เช่น 3, 5, 6)" style="max-width:300px; font-size:18px; padding:10px; margin:10px 0; border-radius:15px;">
+      <button class="neon-btn" onclick="addAnswer('wrong')" style="font-size:14px; padding:8px 16px; min-height:40px;">เพิ่มคำตอบ</button>
+      <div id="wrongAnswersList" style="margin-top:10px;"></div>
+    </div>
+  </div>
+  
+  <button class="neon-btn-green" onclick="addQuestion()" style="margin-top:20px; font-size:14px; padding:8px 16px; min-height:40px;">บันทึกโจทย์</button>
+  
+  <hr style="margin:30px 0; border:none; border-top:2px solid #ccc;">
+  
+  <h3>โจทย์ทั้งหมด (<span id="questionCount">0</span> ข้อ)</h3>
+  <div id="questionsList" style="max-height:400px; overflow-y:auto;"></div>
+</div>
+
+<button class="neon-btn" onclick="saveConfig()" style="margin-top:20px;">เริ่มกิจกรรม</button>
+
+<script>
+let correctAnswers = [];
+let wrongAnswers = [];
+let allQuestions = []; // เก็บโจทย์ทั้งหมด
+
+// ฟังก์ชันเพิ่มคำตอบ
+function addAnswer(type) {
+  const inputId = type === 'correct' ? 'correctAnswerInput' : 'wrongAnswerInput';
+  const input = document.getElementById(inputId);
+  const answer = input.value.trim();
+  
+  if (!answer) {
+    alert('กรุณากรอกคำตอบ');
+    return;
+  }
+  
+  if (type === 'correct') {
+    correctAnswers.push(answer);
+    renderAnswers('correct');
+  } else {
+    wrongAnswers.push(answer);
+    renderAnswers('wrong');
+  }
+  
+  input.value = ''; // Clear input
+}
+
+// ฟังก์ชันลบคำตอบ
+function removeAnswer(type, index) {
+  if (type === 'correct') {
+    correctAnswers.splice(index, 1);
+    renderAnswers('correct');
+  } else {
+    wrongAnswers.splice(index, 1);
+    renderAnswers('wrong');
+  }
+}
+
+// ฟังก์ชันแสดงรายการคำตอบ
+function renderAnswers(type) {
+  const listId = type === 'correct' ? 'correctAnswersList' : 'wrongAnswersList';
+  const answers = type === 'correct' ? correctAnswers : wrongAnswers;
+  const list = document.getElementById(listId);
+  
+  list.innerHTML = answers.map((answer, i) => `
+    <div class="choice-item">
+      <span style="font-size:18px; font-weight:bold;">${answer}</span>
+      <button onclick="removeAnswer('${type}', ${i})">ลบ</button>
+    </div>
+  `).join('');
+}
+
+// ฟังก์ชันเพิ่มโจทย์
+function addQuestion() {
+  const question = document.getElementById('questionInput').value.trim();
+  
+  if (!question) {
+    alert('กรุณาพิมพ์โจทย์เลข');
+    return;
+  }
+  
+  if (correctAnswers.length === 0) {
+    alert('กรุณาเพิ่มคำตอบที่ถูกต้องอย่างน้อย 1 คำตอบ');
+    return;
+  }
+  
+  if (wrongAnswers.length === 0) {
+    alert('กรุณาเพิ่มคำตอบที่ผิดอย่างน้อย 1 คำตอบ');
+    return;
+  }
+  
+  // เพิ่มโจทย์เข้า array
+  allQuestions.push({
+    question: question,
+    correctAnswers: [...correctAnswers],
+    wrongAnswers: [...wrongAnswers]
+  });
+  
+  // Clear form
+  document.getElementById('questionInput').value = '';
+  correctAnswers = [];
+  wrongAnswers = [];
+  renderAnswers('correct');
+  renderAnswers('wrong');
+  
+  // แสดงรายการโจทย์
+  renderQuestionsList();
+}
+
+// ฟังก์ชันแสดงรายการโจทย์ทั้งหมด
+function renderQuestionsList() {
+  const list = document.getElementById('questionsList');
+  document.getElementById('questionCount').innerText = allQuestions.length;
+  
+  list.innerHTML = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">` + 
+    allQuestions.map((q, i) => `
+      <div style="background:rgba(255,255,255,0.9); padding:8px; border-radius:6px; border:2px solid #74640a;">
+        <div style="display:flex; justify-content:space-between; align-items:start; gap:5px;">
+          <div style="flex:1; text-align:left;">
+            <div style="margin:0 0 4px 0; color:#333; font-weight:bold; font-size:13px;">ข้อ ${i + 1}: ${q.question}</div>
+            <div style="margin:2px 0; font-size:12px;">
+              <span style="color:#4CAF50; font-weight:bold;">✓</span> ${q.correctAnswers.join(', ')}
+            </div>
+            <div style="margin:2px 0; font-size:12px;">
+              <span style="color:#f44336; font-weight:bold;">✗</span> ${q.wrongAnswers.join(', ')}
+            </div>
+          </div>
+          <button onclick="removeQuestion(${i})" style="background:#f44336; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">ลบ</button>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+}
+
+// ฟังก์ชันลบโจทย์
+function removeQuestion(index) {
+  if (confirm('ต้องการลบโจทย์นี้?')) {
+    allQuestions.splice(index, 1);
+    renderQuestionsList();
+  }
+}
+
+// ฟังก์ชันจัดการรูปภาพที่อัปโหลด (เก็บไว้เผื่อใช้ในอนาคต)
+function handleImageUpload(event, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Auto crop to square
+      const croppedImageData = autoCropToSquare(img);
+      
+      // เพิ่มรูปเข้าอาร์เรย์
+      if (type === 'correct') {
+        correctImages.push(croppedImageData);
+        event.target.value = ''; // Clear input
+        renderImages('correct');
+      } else {
+        wrongImages.push(croppedImageData);
+        event.target.value = ''; // Clear input
+        renderImages('wrong');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ฟังก์ชันปรับขนาดและตัดพื้นหลังอัตโนมัติ
+function autoCropToSquare(img) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // กำหนดขนาดสูงสุด
+  const maxSize = 300;
+  let width = img.width;
+  let height = img.height;
+  
+  // ปรับขนาดถ้ารูปใหญ่เกินไป โดยรักษาสัดส่วน
+  if (width > maxSize || height > maxSize) {
+    if (width > height) {
+      height = (height / width) * maxSize;
+      width = maxSize;
+    } else {
+      width = (width / height) * maxSize;
+      height = maxSize;
+    }
+  }
+  
+  canvas.width = width;
+  canvas.height = height;
+  
+  // วาดรูปลงบน canvas
+  ctx.drawImage(img, 0, 0, width, height);
+  
+  // ตัดพื้นหลัง
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  
+  // หาสีพื้นหลัง (ใช้สีมุม 4 มุม)
+  const corners = [
+    [0, 0], // มุมซ้ายบน
+    [width - 1, 0], // มุมขวาบน
+    [0, height - 1], // มุมซ้ายล่าง
+    [width - 1, height - 1] // มุมขวาล่าง
+  ];
+  
+  let bgColor = null;
+  for (let corner of corners) {
+    const x = corner[0];
+    const y = corner[1];
+    const index = (y * width + x) * 4;
+    const r = data[index];
+    const g = data[index + 1];
+    const b = data[index + 2];
+    
+    if (r > 200 && g > 200 && b > 200) { // สีขาวหรือใกล้เคียง
+      bgColor = { r, g, b };
+      break;
+    }
+  }
+  
+  // ตัดพื้นหลังออก (ถ้าเจอสีพื้นหลัง)
+  if (bgColor) {
+    const threshold = 40; // ค่าความต่างของสี
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      
+      // ถ้าสีใกล้เคียงกับพื้นหลัง ให้โปร่งใส
+      if (Math.abs(r - bgColor.r) < threshold && 
+          Math.abs(g - bgColor.g) < threshold && 
+          Math.abs(b - bgColor.b) < threshold) {
+        data[i + 3] = 0; // ทำให้โปร่งใส
+      }
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+  }
+  
+  // แปลงเป็น base64 (ใช้ PNG เพื่อรักษาความโปร่งใส)
+  return canvas.toDataURL('image/png', 0.9);
+}
+
+// ฟังก์ชันลบรูปภาพ
+function removeImage(type, index) {
+  if (type === 'correct') {
+    correctImages.splice(index, 1);
+    renderImages('correct');
+  } else {
+    wrongImages.splice(index, 1);
+    renderImages('wrong');
+  }
+}
+
+// ฟังก์ชันแสดงรายการรูปภาพ
+function renderImages(type) {
+  const listId = type === 'correct' ? 'correctImagesList' : 'wrongImagesList';
+  const images = type === 'correct' ? correctImages : wrongImages;
+  const list = document.getElementById(listId);
+  
+  list.innerHTML = images.map((imgData, i) => `
+    <div class="image-preview-item">
+      <img src="${imgData}" alt="Image ${i+1}">
+      <button class="remove-btn" onclick="removeImage('${type}', ${i})">×</button>
+    </div>
+  `).join('');
+}
+
+// โหลด config เก่าถ้ามี
+const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
+if(savedConfig.week) document.getElementById('weekInput').value = savedConfig.week;
+if(savedConfig.topic) document.getElementById('topicInput').value = savedConfig.topic;
+if(savedConfig.unit) document.getElementById('unitInput').value = savedConfig.unit;
+if(savedConfig.teacher) document.getElementById('teacherInput').value = savedConfig.teacher;
+if(savedConfig.questions) {
+  allQuestions = savedConfig.questions;
+  renderQuestionsList();
+}
+renderAnswers('correct');
+renderAnswers('wrong');
+
+function saveConfig(){
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+
+  if(!week){ alert("กรุณากรอกสัปดาห์ที่"); return; }
+  if(!topic){ alert("กรุณากรอกสาระการเรียนรู้"); return; }
+  if(!unit){ alert("กรุณากรอกหน่วยการเรียนรู้"); return; }
+  if(!teacher){ alert("กรุณากรอกชื่อผู้รับผิดชอบ"); return; }
+  if(allQuestions.length === 0){ alert("กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อ"); return; }
+
+  // บันทึก config พร้อมโจทย์ทั้งหมด
+  const config = {
+    week: week,
+    topic: topic,
+    unit: unit,
+    teacher: teacher,
+    questions: allQuestions  // เก็บเป็น array ของโจทย์
+  };
+  localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+
+  // เด้งไปหน้าเกม
+  window.location.href='gamemath.html';
+}
+</script>
+
+</body>
+</html>

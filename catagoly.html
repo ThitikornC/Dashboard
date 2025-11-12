@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category</title>
+    
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
+  z-index: -1;
+}
+
+/* Neon Button */
+.neon-btn {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  color: #000000;
+  border: 6px solid #74640a;
+  border-radius: 9999px;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+  z-index: 10;
+  min-height: 55px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  margin: 20px auto;
+  max-width: 400px;
+}
+
+.neon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0 #000, -10px 8px #3b3305, 0 0 25px rgba(255,230,160,0.75);
+}
+
+/* Background colors */
+.bg-calculate {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%) !important;
+  color: #000000 !important;
+}
+
+.bg-general {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%) !important;
+  color: #000000 !important;
+}
+
+.container {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;          /* ให้ container สูงเท่าหน้าจอ */
+  display: flex;              /* ใช้ flex จัดกึ่งกลาง */
+  flex-direction: column;     /* เรียงจากบนลงล่าง */
+  justify-content: center;    /* กึ่งกลางแนวตั้ง */
+  align-items: center;        /* กึ่งกลางแนวนอน */
+  padding: 40px 20px;
+  text-align: center;
+}
+
+
+h1 {
+  color: #fff;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>เลือกหมวดหมู่</h1>
+        
+        <a href="/teachermatch.html" class="neon-btn bg-calculate text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
+          วิชาตัวเลข
+        </a>
+
+        <a href="/teacherpicture.html" class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
+          วิชาทั่วไป
+        </a>
+    </div>
+</body>
+</html>
