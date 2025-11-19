@@ -13,9 +13,8 @@ app.use(express.json()); // เพิ่ม middleware สำหรับ parse 
 let feedbackList = [];
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "menu.html"));
+  res.sendFile(path.join(__dirname, "index-analytics.html"));
 });
-
 
 app.get("/gamematch", (req, res) => {
   res.sendFile(path.join(__dirname, "gamematch.html"));
