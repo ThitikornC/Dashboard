@@ -103,8 +103,8 @@
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">จำนวนเกมที่เล่น</div>
-        <div class="stat-icon" style="background: #f3e5f5;">🎮</div>
+        <div class="stat-title">จำนวนเกมที่ทดสอบ</div>
+        <div class="stat-icon" style="background: #f3e5f5;">📘</div>
       </div>
       <div class="stat-value" id="totalGames">0</div>
       <div class="stat-change positive">
@@ -138,7 +138,7 @@
   <!-- Charts -->
   <div class="charts-grid">
     <div class="chart-card">
-      <h3>📈 สถิติการเล่นเกมแยกตามประเภท</h3>
+      <h3>📈 สถิติการทดสอบแยกตามประเภท</h3>
       <canvas id="gameTypeChart"></canvas>
     </div>
 
@@ -584,7 +584,7 @@ class Dashboard {
       data: {
         labels: sorted.map(([name]) => name),
         datasets: [{
-          label: 'จำนวนครั้งที่เล่น',
+          label: 'จำนวนครั้งที่ทดสอบ',
           data: sorted.map(([, count]) => count),
           backgroundColor: '#2ecc71',
           borderRadius: 8
