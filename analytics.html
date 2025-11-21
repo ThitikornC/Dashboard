@@ -113,11 +113,11 @@
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">เวลาใช้งานเฉลี่ย</div>
+        <div class="stat-title">เวลาในการใช้งานของผู้ใช้ทั้งหมด</div>
         <div class="stat-icon" style="background: #fff3e0;">⏱️</div>
       </div>
-      <div class="stat-value" id="avgTime">0</div>
-      <div class="time-label">นาที/ครั้ง</div>
+        <div class="stat-value" id="avgTime">0</div>
+        <div class="time-label">ชั่วโมง</div>
     </div>
 
     <div class="stat-card">
@@ -146,40 +146,7 @@
     </div>
   </div>
 
-  <div class="charts-grid">
-    <div class="chart-card">
-      <h3>⏰ เวลาใช้งานเฉลี่ยต่อเกม</h3>
-      <canvas id="avgTimeChart"></canvas>
-    </div>
 
-    <div class="chart-card">
-      <h3>🏆 Top 5 ผู้เล่นที่ใช้งานมากที่สุด</h3>
-      <canvas id="topPlayersChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Activity Table -->
-  <div class="table-card">
-    <h3>📋 กิจกรรมล่าสุด</h3>
-    <table id="activityTable">
-      <thead>
-        <tr>
-          <th>เวลา</th>
-          <th>ชื่อผู้เล่น</th>
-          <th>ทีม</th>
-          <th>เกม</th>
-          <th>คะแนน</th>
-          <th>ระยะเวลา</th>
-          <th>สถานะ</th>
-        </tr>
-      </thead>
-      <tbody id="activityTableBody">
-        <tr>
-          <td colspan="7" class="loading">กำลังโหลดข้อมูล...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
 
   <!-- Feedback Section -->
   <div class="table-card" style="margin-top: 30px;">
@@ -363,8 +330,11 @@ async function fetchUsageAverageFromAPI() {
 
     if (!json || typeof json !== 'object') return null;
 
-    // ตัวอย่าง response: { averageMinutes: 4.12345, ... }
-    let avg = json.averageMinutes ?? json.average_minutes ?? json.averageMinute ?? null;
+    // ตัวอย่าง response: { totalHours: 0.0687, averageMinutes: 4.12345, ... }
+    // ให้ความสำคัญกับฟิลด์ `totalHours` ก่อน ตามที่ร้องขอ
+    let avg = json.totalHours ?? json.total_hours ?? null;
+    // ถ้าไม่มี totalHours ให้ fallback ไปหา averageMinutes เดิม (เพื่อความเข้ากันได้ย้อนหลัง)
+    if (avg == null) avg = json.averageMinutes ?? json.average_minutes ?? json.averageMinute ?? null;
     if (avg == null) {
       // บาง API อาจห่อด้วย data หรือ value
       if (typeof json.data === 'object' && json.data !== null) {
@@ -378,8 +348,8 @@ async function fetchUsageAverageFromAPI() {
     }
 
     if (typeof avg === 'number' && !Number.isNaN(avg)) {
-      try { localStorage.setItem('averageMinutesFromAPI', String(avg)); } catch (e) {}
-      return avg;
+      try { localStorage.setItem('totalHoursFromAPI', String(avg)); } catch (e) {}
+      return avg; // if this was averageMinutes fallback, it will be minutes — callers should treat returned value as hours when totalHours present; fallback handling in callers will convert minutes->hours if needed
     }
 
     return null;
@@ -672,26 +642,26 @@ class Dashboard {
     // จำนวนเกม
     document.getElementById('totalGames').textContent = (data.totalGames || 0).toLocaleString();
     
-    // เวลาเฉลี่ย: ใช้ค่า `averageMinutes` จาก API (2 ตำแหน่งทศนิยม) เป็นหลัก
+    // เวลาเฉลี่ย: ใช้ค่า `totalHours` จาก API (ชั่วโมง, 2 ตำแหน่งทศนิยม) เป็นหลัก
     const avgElem = document.getElementById('avgTime');
     // แสดงสถานะระหว่างรอผล
     avgElem.textContent = 'กำลังโหลด...';
 
     fetchUsageAverageFromAPI().then(avg => {
       if (typeof avg === 'number') {
-        // แสดงทศนิยม 2 ตำแหน่ง
+        // API ส่งค่าเป็นชั่วโมง (totalHours) -> แสดงทศนิยม 2 ตำแหน่ง
         avgElem.textContent = Number(avg).toFixed(2);
         try { avgElem.setAttribute('data-last-avg-source', 'api'); } catch(e){}
       } else {
-        // fallback: คำนวณจาก local data (avgDuration เป็นวินาที) แปลงเป็นนาที
-        const localAvgMinutes = (data.avgDuration || 0) / 60;
-        avgElem.textContent = Math.round(localAvgMinutes).toString();
+        // fallback: คำนวณจาก local data (avgDuration เป็นวินาที) แปลงเป็นชั่วโมง
+        const localAvgHours = (data.avgDuration || 0) / 3600;
+        avgElem.textContent = Number(localAvgHours).toFixed(2);
         try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
       }
     }).catch(err => {
       console.debug('fetchUsageAverageFromAPI failed:', err);
-      const localAvgMinutes = (data.avgDuration || 0) / 60;
-      avgElem.textContent = Math.round(localAvgMinutes).toString();
+      const localAvgHours = (data.avgDuration || 0) / 3600;
+      avgElem.textContent = Number(localAvgHours).toFixed(2);
       try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
     });
     
@@ -816,7 +786,9 @@ class Dashboard {
     
     Object.keys(avgTimeByGame).forEach(gameType => {
       labels.push(gameType === 'math' ? 'วิชาคณิตศาสตร์' : 'วิชาทั่วไป');
-      values.push(Math.round(avgTimeByGame[gameType] / countByGame[gameType] / 60)); // นาที
+      // convert average duration (seconds) -> hours, keep two decimals for display in chart
+      const hours = avgTimeByGame[gameType] / countByGame[gameType] / 3600;
+      values.push(Number(hours.toFixed(2)));
     });
     
     const ctx = document.getElementById('avgTimeChart').getContext('2d');
@@ -825,7 +797,7 @@ class Dashboard {
       data: {
         labels: labels,
         datasets: [{
-          label: 'เวลาเฉลี่ย (นาที)',
+          label: 'เวลาเฉลี่ย (ชั่วโมง)',
           data: values,
           backgroundColor: ['#667eea', '#764ba2'],
           borderRadius: 8
