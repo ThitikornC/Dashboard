@@ -220,6 +220,42 @@ function checkAuth() {
   return false;
 }
 
+// ดึงจำนวนผู้ใช้จาก API ภายนอก (fallback: คืนค่า null เมื่อไม่สำเร็จ)
+async function fetchActiveClientsFromAPI() {
+  try {
+    const res = await fetch('https://huaroa-production.up.railway.app/api/active-clients', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Network response was not ok');
+
+    const json = await res.json();
+    // ให้ความสำคัญกับฟิลด์ `activeClients` (หรือ `active_clients`) เสมอเมื่อมี
+    // รองรับกรณีที่ response ถูกห่อด้วย { success: true, activeClients: 0 }
+    if (json && typeof json === 'object') {
+      if ('activeClients' in json || 'active_clients' in json) {
+        const val = json.activeClients ?? json.active_clients;
+        if (typeof val === 'number' && !Number.isNaN(val)) return val;
+      }
+    }
+
+    // ถ้า response เป็นตัวเลขตรงๆ ให้ใช้
+    if (typeof json === 'number') return json;
+
+    // รองรับ array หรือ property ทั่วไป เป็น fallback
+    if (Array.isArray(json)) return json.length;
+
+    if (json && typeof json === 'object') {
+      const candidate = json.count ?? json.total ?? json.clients ?? null;
+      if (typeof candidate === 'number' && !Number.isNaN(candidate)) return candidate;
+      if (Array.isArray(json.data)) return json.data.length;
+      if (Array.isArray(json.clients)) return json.clients.length;
+    }
+
+    return null;
+  } catch (err) {
+    console.error('Error fetching active clients from API:', err);
+    return null;
+  }
+}
+
 function showLogin() {
   document.getElementById('loginModal').style.display = 'flex';
   document.getElementById('dashboardContainer').style.display = 'none';
@@ -431,7 +467,20 @@ class Dashboard {
     
     // Active Users (นับจากผู้เล่นที่มีชื่อไม่ซ้ำกัน)
     const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
-    document.getElementById('activeUsers').textContent = uniquePlayers;
+    const activeElem = document.getElementById('activeUsers');
+    // แสดงค่าจาก local เป็น fallback ก่อน
+    activeElem.textContent = uniquePlayers;
+
+    // พยายามดึงค่าจาก API ภายนอกมาแทน (ถ้าสำเร็จ)
+    // เรียก API และถ้ามีค่าจาก `activeClients` ให้แสดงเป็นค่าหลัก
+    fetchActiveClientsFromAPI().then(count => {
+      if (typeof count === 'number') {
+        // แสดงตัวเลขที่ได้จาก API พร้อม label เล็กๆ เพื่อให้ทราบที่มา
+        activeElem.innerHTML = `${count.toLocaleString()} <span style="font-size:12px;color:#666;">(จาก API)</span>`;
+      }
+    }).catch(err => {
+      console.debug('fetchActiveClientsFromAPI failed:', err);
+    });
   }
 
   createCharts(data) {
