@@ -86,6 +86,32 @@ app.get('/status/active-clients', async (req, res) => {
   }
 });
 
+// Proxy endpoint สำหรับ /status/usage-average เพื่อหลีกเลี่ยงปัญหา CORS
+app.get('/status/usage-average', async (req, res) => {
+  try {
+    let fetchFn = null;
+    if (typeof fetch !== 'undefined') {
+      fetchFn = fetch;
+    } else {
+      const mod = await import('node-fetch');
+      fetchFn = mod.default;
+    }
+
+    // ใช้ query string ที่ร้องขอโดยลูกค้า (server จะเรียก external endpoint ตรงๆ)
+    // โปรดสังเกตว่า client ควรเรียก /status/usage-average (same-origin) แล้ว server จะส่งต่อ
+    const externalUrl = 'https://huaroa-production.up.railway.app/status/usage-average?period=all%20|%20ConvertTo-Json%20-Depth%205';
+    const externalRes = await fetchFn(externalUrl);
+    const data = await externalRes.json();
+
+    // ตั้ง CORS header ให้ client สามารถดึงข้อมูลได้จากเบราว์เซอร์
+    res.set('Access-Control-Allow-Origin', '*');
+    res.json(data);
+  } catch (err) {
+    console.error('Error proxying status/usage-average:', err);
+    res.status(502).json({ success: false, message: 'Proxy error fetching status/usage-average' });
+  }
+});
+
 // API สำหรับข้อเสนอแนะ
 app.post("/api/feedback", (req, res) => {
   try {

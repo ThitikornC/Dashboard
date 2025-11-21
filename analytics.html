@@ -342,6 +342,53 @@ async function fetchDistinctClientsFromAPI() {
   }
 }
 
+// ดึงค่า average usage (averageMinutes) จาก endpoint /status/usage-average
+async function fetchUsageAverageFromAPI() {
+  try {
+    let res;
+    try {
+      res = await fetch('/status/usage-average', { cache: 'no-store' });
+      console.debug('fetchUsageAverageFromAPI: tried local proxy /status/usage-average ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchUsageAverageFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      const externalUrl = 'https://huaroa-production.up.railway.app/status/usage-average?period=all%20|%20ConvertTo-Json%20-Depth%205';
+      res = await fetch(externalUrl, { cache: 'no-store' });
+      console.debug('fetchUsageAverageFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
+
+    const json = await res.json();
+    console.debug('fetchUsageAverageFromAPI: raw json', json);
+
+    if (!json || typeof json !== 'object') return null;
+
+    // ตัวอย่าง response: { averageMinutes: 4.12345, ... }
+    let avg = json.averageMinutes ?? json.average_minutes ?? json.averageMinute ?? null;
+    if (avg == null) {
+      // บาง API อาจห่อด้วย data หรือ value
+      if (typeof json.data === 'object' && json.data !== null) {
+        avg = json.data.averageMinutes ?? json.data.average_minutes ?? null;
+      }
+    }
+
+    if (typeof avg === 'string') {
+      const parsed = Number(avg);
+      if (!Number.isNaN(parsed)) avg = parsed;
+    }
+
+    if (typeof avg === 'number' && !Number.isNaN(avg)) {
+      try { localStorage.setItem('averageMinutesFromAPI', String(avg)); } catch (e) {}
+      return avg;
+    }
+
+    return null;
+  } catch (err) {
+    console.debug('Error fetching usage-average from API:', err);
+    return null;
+  }
+}
+
 // ----- Active Users Polling (lightweight) -----
 // ฟังก์ชันอัปเดตค่า active users แบบครั้งเดียว (ไม่โหลด dashboard ทั้งหมด)
 function updateActiveUsersOnce() {
@@ -625,9 +672,28 @@ class Dashboard {
     // จำนวนเกม
     document.getElementById('totalGames').textContent = (data.totalGames || 0).toLocaleString();
     
-    // เวลาเฉลี่ย
-    const avgMinutes = Math.round((data.avgDuration || 0) / 60);
-    document.getElementById('avgTime').textContent = avgMinutes;
+    // เวลาเฉลี่ย: ใช้ค่า `averageMinutes` จาก API (2 ตำแหน่งทศนิยม) เป็นหลัก
+    const avgElem = document.getElementById('avgTime');
+    // แสดงสถานะระหว่างรอผล
+    avgElem.textContent = 'กำลังโหลด...';
+
+    fetchUsageAverageFromAPI().then(avg => {
+      if (typeof avg === 'number') {
+        // แสดงทศนิยม 2 ตำแหน่ง
+        avgElem.textContent = Number(avg).toFixed(2);
+        try { avgElem.setAttribute('data-last-avg-source', 'api'); } catch(e){}
+      } else {
+        // fallback: คำนวณจาก local data (avgDuration เป็นวินาที) แปลงเป็นนาที
+        const localAvgMinutes = (data.avgDuration || 0) / 60;
+        avgElem.textContent = Math.round(localAvgMinutes).toString();
+        try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
+      }
+    }).catch(err => {
+      console.debug('fetchUsageAverageFromAPI failed:', err);
+      const localAvgMinutes = (data.avgDuration || 0) / 60;
+      avgElem.textContent = Math.round(localAvgMinutes).toString();
+      try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
+    });
     
     // Active Users (ค่าจะแสดงจาก API `activeClients` เป็นหลัก)
     const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
