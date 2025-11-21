@@ -91,7 +91,7 @@
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">ยอดการเข้าชมทั้งหมด</div>
+        <div class="stat-title">จำนวนผู้ที่เข้าใช้ทั้งหมด</div>
         <div class="stat-icon" style="background: #e3f2fd;">👥</div>
       </div>
       <div class="stat-value" id="totalVisits">0</div>
@@ -288,6 +288,48 @@ async function fetchActiveClientsFromAPI() {
   } catch (err) {
     console.error('Error fetching active clients from API:', err);
     try { localStorage.removeItem('activeClientsFromAPI'); } catch(e){}
+    return null;
+  }
+}
+
+// ดึงข้อมูลผู้ใช้แบบ distinct จาก endpoint /status/active-clients
+async function fetchDistinctClientsFromAPI() {
+  try {
+    let res;
+    try {
+      res = await fetch('/status/active-clients', { cache: 'no-store' });
+      console.debug('fetchDistinctClientsFromAPI: tried local proxy /status/active-clients ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchDistinctClientsFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      res = await fetch('https://huaroa-production.up.railway.app/status/active-clients', { cache: 'no-store' });
+      console.debug('fetchDistinctClientsFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
+
+    const json = await res.json();
+    console.debug('fetchDistinctClientsFromAPI: raw json', json);
+
+    // หากมีฟิลด์ totalDistinctClientIds ใช้ค่านั้น
+    if (json && typeof json === 'object') {
+      const total = json.totalDistinctClientIds ?? json.totalDistinctClients ?? json.totalDistinct ?? null;
+      if (typeof total === 'number' && !Number.isNaN(total)) return total;
+
+      // ถ้ามี counts object ให้นับจำนวน key เป็น distinct ids
+      if (json.counts && typeof json.counts === 'object') {
+        try {
+          const keys = Object.keys(json.counts);
+          // ถ้าค่าที่เก็บเป็น map ของ clientId -> count, จำนวน distinct คือ keys.length
+          return keys.length;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.debug('Error fetching distinct clients from API:', err);
     return null;
   }
 }
@@ -554,7 +596,23 @@ class Dashboard {
 
   updateStatsCards(data) {
     // ยอดเข้าชม
-    document.getElementById('totalVisits').textContent = (data.totalVisits || 0).toLocaleString();
+    const totalVisitsElem = document.getElementById('totalVisits');
+    // แสดงค่าจาก local เป็นค่าเริ่มต้นก่อน
+    totalVisitsElem.textContent = (data.totalVisits || 0).toLocaleString();
+
+    // พยายามดึงค่า distinct clients จาก API /status/active-clients และใช้เป็นค่าหลักเมื่อได้
+    fetchDistinctClientsFromAPI().then(count => {
+      console.debug('updateStatsCards: localTotal=', data.totalVisits, ' distinctApi=', count);
+      if (typeof count === 'number') {
+        totalVisitsElem.textContent = count.toLocaleString();
+        try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'api'); } catch(e){}
+      } else {
+        try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'local'); } catch(e){}
+      }
+    }).catch(err => {
+      console.debug('fetchDistinctClientsFromAPI failed:', err);
+      try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'local'); } catch(e){}
+    });
     
     // จำนวนเกม
     document.getElementById('totalGames').textContent = (data.totalGames || 0).toLocaleString();
