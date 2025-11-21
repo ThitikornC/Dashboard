@@ -62,6 +62,30 @@ app.get('/api/active-clients', async (req, res) => {
   }
 });
 
+// Proxy endpoint สำหรับ /status/active-clients เพื่อหลีกเลี่ยงปัญหา CORS
+app.get('/status/active-clients', async (req, res) => {
+  try {
+    let fetchFn = null;
+    if (typeof fetch !== 'undefined') {
+      fetchFn = fetch;
+    } else {
+      const mod = await import('node-fetch');
+      fetchFn = mod.default;
+    }
+
+    const externalUrl = 'https://huaroa-production.up.railway.app/status/active-clients';
+    const externalRes = await fetchFn(externalUrl);
+    const data = await externalRes.json();
+
+    // ตั้ง CORS header ให้ client สามารถดึงข้อมูลได้จากเบราว์เซอร์
+    res.set('Access-Control-Allow-Origin', '*');
+    res.json(data);
+  } catch (err) {
+    console.error('Error proxying status/active-clients:', err);
+    res.status(502).json({ success: false, message: 'Proxy error fetching status/active-clients' });
+  }
+});
+
 // API สำหรับข้อเสนอแนะ
 app.post("/api/feedback", (req, res) => {
   try {

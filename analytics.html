@@ -43,12 +43,10 @@
 <div class="container" id="dashboardContainer" style="display:none;">
   <!-- Header -->
   <div class="header">
-    <h1>📊 Dashboard Analytics</h1>
+    <h1>Esspresso โรงเรียนเทศบาล3แม่ฮ่องสอน</h1>
     <div class="header-actions">
       <button class="btn btn-success" onclick="exportData()">📥 Export Data</button>
-      <button class="btn btn-danger" onclick="clearAllData()">🗑️ ล้างข้อมูล</button>
       <button class="btn btn-danger" onclick="logout()" style="background:#e67e22;">🔒 ออกจากระบบ</button>
-      <button class="btn btn-primary" onclick="window.location.href='menu.html'">🏠 กลับหน้าหลัก</button>
     </div>
     
     <!-- Date Filter Section -->
@@ -124,7 +122,7 @@
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">ผู้ใช้ที่ Active</div>
+        <div class="stat-title">จำนวนผู้ที่ใช้งานอยู่</div>
         <div class="stat-icon" style="background: #e8f5e9;">✅</div>
       </div>
       <div class="stat-value" id="activeUsers">0</div>
@@ -310,16 +308,26 @@ async function fetchDistinctClientsFromAPI() {
     const json = await res.json();
     console.debug('fetchDistinctClientsFromAPI: raw json', json);
 
-    // หากมีฟิลด์ totalDistinctClientIds ใช้ค่านั้น
+    // ให้ความสำคัญกับฟิลด์ totalEverUsers ก่อน (ตามที่ขอ)
     if (json && typeof json === 'object') {
-      const total = json.totalDistinctClientIds ?? json.totalDistinctClients ?? json.totalDistinct ?? null;
-      if (typeof total === 'number' && !Number.isNaN(total)) return total;
+      const ever = json.totalEverUsers ?? json.totalEver ?? json.total_users ?? null;
+      if (typeof ever === 'number' && !Number.isNaN(ever)) {
+        try { localStorage.setItem('totalEverUsersFromAPI', String(ever)); } catch(e){}
+        return ever;
+      }
+
+      // ถัดมาใช้ totalDistinctClientIds ถ้ามี
+      const totalDistinct = json.totalDistinctClientIds ?? json.totalDistinctClients ?? json.totalDistinct ?? null;
+      if (typeof totalDistinct === 'number' && !Number.isNaN(totalDistinct)) {
+        try { localStorage.setItem('totalDistinctFromAPI', String(totalDistinct)); } catch(e){}
+        return totalDistinct;
+      }
 
       // ถ้ามี counts object ให้นับจำนวน key เป็น distinct ids
       if (json.counts && typeof json.counts === 'object') {
         try {
           const keys = Object.keys(json.counts);
-          // ถ้าค่าที่เก็บเป็น map ของ clientId -> count, จำนวน distinct คือ keys.length
+          try { localStorage.setItem('totalDistinctFromAPI', String(keys.length)); } catch(e){}
           return keys.length;
         } catch (e) {
           // ignore
