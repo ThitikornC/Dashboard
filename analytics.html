@@ -201,6 +201,10 @@ const ANALYTICS_PASSWORD = '240124'; // เปลี่ยนรหัสผ่�
 const AUTH_KEY = 'analyticsAuth';
 const AUTH_TIMEOUT = 3600000; // 1 ชั่วโมง (มิลลิวินาที)
 
+// ตัวแปรสำหรับ Date Filter (ประกาศไว้ก่อนจะมีการเรียกใช้)
+let currentStartDate = null;
+let currentEndDate = null;
+
 function checkAuth() {
   const auth = localStorage.getItem(AUTH_KEY);
   if (auth) {
@@ -223,38 +227,131 @@ function checkAuth() {
 // ดึงจำนวนผู้ใช้จาก API ภายนอก (fallback: คืนค่า null เมื่อไม่สำเร็จ)
 async function fetchActiveClientsFromAPI() {
   try {
-    const res = await fetch('https://huaroa-production.up.railway.app/api/active-clients', { cache: 'no-store' });
-    if (!res.ok) throw new Error('Network response was not ok');
+    // พยายามเรียก proxy ในเครื่องก่อน (same-origin) เพื่อหลีกเลี่ยงปัญหา CORS
+    let res;
+    try {
+      res = await fetch('/api/active-clients', { cache: 'no-store' });
+      console.debug('fetchActiveClientsFromAPI: tried local proxy /api/active-clients ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchActiveClientsFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      // ถ้า proxy ไม่พร้อม ให้ลองเรียก external โดยตรง (อาจโดน CORS)
+      res = await fetch('https://huaroa-production.up.railway.app/api/active-clients', { cache: 'no-store' });
+      console.debug('fetchActiveClientsFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
 
     const json = await res.json();
+    console.debug('fetchActiveClientsFromAPI: raw json', json);
+    console.debug('fetchActiveClientsFromAPI: raw json', json);
     // ให้ความสำคัญกับฟิลด์ `activeClients` (หรือ `active_clients`) เสมอเมื่อมี
     // รองรับกรณีที่ response ถูกห่อด้วย { success: true, activeClients: 0 }
     if (json && typeof json === 'object') {
       if ('activeClients' in json || 'active_clients' in json) {
         const val = json.activeClients ?? json.active_clients;
-        if (typeof val === 'number' && !Number.isNaN(val)) return val;
+        console.debug('fetchActiveClientsFromAPI: found activeClients field ->', val);
+        if (typeof val === 'number' && !Number.isNaN(val)) {
+          try { localStorage.setItem('activeClientsFromAPI', String(val)); } catch(e){}
+          return val;
+        }
       }
     }
 
     // ถ้า response เป็นตัวเลขตรงๆ ให้ใช้
-    if (typeof json === 'number') return json;
+    if (typeof json === 'number') {
+      try { localStorage.setItem('activeClientsFromAPI', String(json)); } catch(e){}
+      return json;
+    }
 
     // รองรับ array หรือ property ทั่วไป เป็น fallback
     if (Array.isArray(json)) return json.length;
 
     if (json && typeof json === 'object') {
       const candidate = json.count ?? json.total ?? json.clients ?? null;
-      if (typeof candidate === 'number' && !Number.isNaN(candidate)) return candidate;
-      if (Array.isArray(json.data)) return json.data.length;
-      if (Array.isArray(json.clients)) return json.clients.length;
+      if (typeof candidate === 'number' && !Number.isNaN(candidate)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(candidate)); } catch(e){}
+        return candidate;
+      }
+      if (Array.isArray(json.data)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(json.data.length)); } catch(e){}
+        return json.data.length;
+      }
+      if (Array.isArray(json.clients)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(json.clients.length)); } catch(e){}
+        return json.clients.length;
+      }
     }
 
+    // ถ้าไม่พบค่า ให้เคลียร์ค่าเก่าใน localStorage และคืน null
+    try { localStorage.removeItem('activeClientsFromAPI'); } catch(e){}
     return null;
   } catch (err) {
     console.error('Error fetching active clients from API:', err);
+    try { localStorage.removeItem('activeClientsFromAPI'); } catch(e){}
     return null;
   }
 }
+
+// ----- Active Users Polling (lightweight) -----
+// ฟังก์ชันอัปเดตค่า active users แบบครั้งเดียว (ไม่โหลด dashboard ทั้งหมด)
+function updateActiveUsersOnce() {
+  const activeElem = document.getElementById('activeUsers');
+  if (!activeElem) return;
+
+  // แสดงสถานะระหว่างรอผล
+  activeElem.textContent = 'กำลังโหลด...';
+
+  fetchActiveClientsFromAPI().then(count => {
+    if (typeof count === 'number') {
+      activeElem.textContent = count.toLocaleString();
+    } else {
+      // fallback: ถ้ามีค่าใน localStorage ให้ใช้
+      const stored = localStorage.getItem('activeClientsFromAPI');
+      if (stored !== null) {
+        activeElem.textContent = Number(stored).toLocaleString();
+      } else {
+        // ถ้าไม่มีค่า API เลย ให้ใช้ค่า local จาก analytics
+        const analytics = new AnalyticsSystem();
+        const data = analytics.getAnalytics();
+        const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
+        activeElem.textContent = uniquePlayers;
+      }
+    }
+    try { activeElem.setAttribute('data-last-active-update', new Date().toISOString()); } catch(e){}
+  }).catch(err => {
+    console.debug('updateActiveUsersOnce failed:', err);
+    // ในกรณี error ให้ใช้ fallback local
+    const analytics = new AnalyticsSystem();
+    const data = analytics.getAnalytics();
+    const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
+    activeElem.textContent = uniquePlayers;
+    try { activeElem.setAttribute('data-last-active-update', new Date().toISOString()); } catch(e){}
+  });
+}
+
+function startActiveUsersPolling(seconds = activeUsersPollSeconds) {
+  stopActiveUsersPolling();
+  activeUsersPollSeconds = seconds;
+  // เรียกครั้งแรกทันที
+  updateActiveUsersOnce();
+  activeUsersIntervalId = setInterval(() => {
+    updateActiveUsersOnce();
+  }, seconds * 1000);
+}
+
+function stopActiveUsersPolling() {
+  if (activeUsersIntervalId) {
+    clearInterval(activeUsersIntervalId);
+    activeUsersIntervalId = null;
+  }
+}
+
+/*
+Alternative approaches:
+- WebSocket or Server-Sent Events (SSE): push updates from server to clients in real-time.
+- Long-polling: client requests and server holds the request until update is available.
+- Polling (implemented here): simplest to implement and works without server changes.
+*/
 
 function showLogin() {
   document.getElementById('loginModal').style.display = 'flex';
@@ -300,6 +397,7 @@ function checkPassword() {
 
 function logout() {
   stopAutoRefresh(); // หยุดการรีเฟรชอัตโนมัติ
+  stopActiveUsersPolling(); // หยุด polling ค่า active users
   localStorage.removeItem(AUTH_KEY);
   window.location.reload();
 }
@@ -465,21 +563,27 @@ class Dashboard {
     const avgMinutes = Math.round((data.avgDuration || 0) / 60);
     document.getElementById('avgTime').textContent = avgMinutes;
     
-    // Active Users (นับจากผู้เล่นที่มีชื่อไม่ซ้ำกัน)
+    // Active Users (ค่าจะแสดงจาก API `activeClients` เป็นหลัก)
     const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
     const activeElem = document.getElementById('activeUsers');
-    // แสดงค่าจาก local เป็น fallback ก่อน
-    activeElem.textContent = uniquePlayers;
+    // แสดงสถานะระหว่างรอผลจาก API
+    activeElem.textContent = 'กำลังโหลด...';
 
-    // พยายามดึงค่าจาก API ภายนอกมาแทน (ถ้าสำเร็จ)
-    // เรียก API และถ้ามีค่าจาก `activeClients` ให้แสดงเป็นค่าหลัก
+    // เรียก API และใช้ค่าจาก `activeClients` เสมอเมื่อมี (แม้เป็น 0)
     fetchActiveClientsFromAPI().then(count => {
+        console.debug('updateStatsCards: uniquePlayers=', uniquePlayers, ' apiCount=', count);
       if (typeof count === 'number') {
-        // แสดงตัวเลขที่ได้จาก API พร้อม label เล็กๆ เพื่อให้ทราบที่มา
-        activeElem.innerHTML = `${count.toLocaleString()} <span style="font-size:12px;color:#666;">(จาก API)</span>`;
+        activeElem.textContent = count.toLocaleString();
+      } else {
+        // ถ้า API ไม่มีค่า ให้แสดง fallback จาก local
+        activeElem.textContent = uniquePlayers;
       }
+        // บันทึก log สั้น ๆ ใน DOM (data- attribute) เพื่อให้ตรวจสอบได้จาก DevTools elements
+        try { activeElem.setAttribute('data-last-updated', new Date().toISOString()); } catch(e){}
     }).catch(err => {
       console.debug('fetchActiveClientsFromAPI failed:', err);
+      activeElem.textContent = uniquePlayers;
+        try { activeElem.setAttribute('data-last-updated', new Date().toISOString()); } catch(e){}
     });
   }
 
@@ -733,6 +837,9 @@ function clearAllData() {
 let dashboardInstance = null;
 let refreshIntervalId = null;
 let refreshIntervalSeconds = 30;
+// Separate polling for active users (lightweight)
+let activeUsersIntervalId = null;
+let activeUsersPollSeconds = 10; // default 10 seconds
 
 // ฟังก์ชันรีเฟรชข้อมูล
 function refreshData() {
@@ -953,6 +1060,8 @@ const originalInitDashboard = initDashboard;
 initDashboard = function() {
   originalInitDashboard();
   loadFeedback();
+  // เริ่ม polling ค่า active users ทุก ๆ activeUsersPollSeconds วินาที
+  startActiveUsersPolling(activeUsersPollSeconds);
   // ไม่เรียก initDateFilter() เพื่อให้แสดงข้อมูลทั้งหมดตั้งแต่เริ่มต้น
   
   // เพิ่มการรีเฟรชข้อเสนอแนะอัตโนมัติ
@@ -963,9 +1072,7 @@ initDashboard = function() {
   }, refreshIntervalSeconds * 1000);
 };
 
-// ตัวแปรสำหรับ Date Filter
-let currentStartDate = null;
-let currentEndDate = null;
+// (ประกาศตัวแปร Date Filter ไว้ด้านบนแล้ว)
 
 // เริ่มต้น Date Filter (ไม่ทำอะไร - ให้แสดงข้อมูลทั้งหมด)
 function initDateFilter() {

@@ -36,6 +36,32 @@ app.get("/teacherpicture", (req, res) => {
   res.sendFile(path.join(__dirname, "teacherpicture.html"));
 });
 
+// Proxy endpoint สำหรับ /api/active-clients เพื่อหลีกเลี่ยงปัญหา CORS
+// จะเรียก API ภายนอกและส่งต่อผลลัพธ์ให้ client
+app.get('/api/active-clients', async (req, res) => {
+  try {
+    // ใช้ global fetch ถ้ามี (Node 18+), ถ้าไม่มีก็ dynamic import 'node-fetch'
+    let fetchFn = null;
+    if (typeof fetch !== 'undefined') {
+      fetchFn = fetch;
+    } else {
+      const mod = await import('node-fetch');
+      fetchFn = mod.default;
+    }
+
+    const externalUrl = 'https://huaroa-production.up.railway.app/api/active-clients';
+    const externalRes = await fetchFn(externalUrl);
+    const data = await externalRes.json();
+
+    // ตั้ง CORS header ให้ client สามารถดึงข้อมูลได้จากเบราว์เซอร์
+    res.set('Access-Control-Allow-Origin', '*');
+    res.json(data);
+  } catch (err) {
+    console.error('Error proxying active-clients:', err);
+    res.status(502).json({ success: false, message: 'Proxy error fetching active-clients' });
+  }
+});
+
 // API สำหรับข้อเสนอแนะ
 app.post("/api/feedback", (req, res) => {
   try {
