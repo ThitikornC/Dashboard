@@ -43,105 +43,60 @@
 <div class="container" id="dashboardContainer" style="display:none;">
   <!-- Header -->
   <div class="header">
-    <h1>Esspresso โรงเรียนเทศบาล3แม่ฮ่องสอน</h1>
+    <h1>Esspresso เทศบาลตำบลหัวรอ</h1>
     <div class="header-actions">
-      <button class="btn btn-success" onclick="exportData()">📥 Export Data</button>
       <button class="btn btn-danger" onclick="logout()" style="background:#e67e22;">🔒 ออกจากระบบ</button>
+    </div>
+    <div style="width:100%; margin-top:10px; font-size:13px; color:#666; display:flex; justify-content:flex-start; align-items:center; gap:12px;">
+      <div id="lastUpdate" style="font-size:13px; color:#666;">อัปเดตล่าสุด: -</div>
+      <div id="currentUTC7" style="font-size:13px; color:#666;">UTC+7: -</div>
     </div>
     
     <!-- Date Filter Section -->
-    <div style="width:100%; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:10px; border:1px solid #dee2e6;">
-      <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <label style="font-weight:600; color:#495057;">📅 เลือกช่วงเวลา:</label>
-          <input type="date" id="startDate" onchange="applyDateFilter()" style="padding:8px 12px; border-radius:6px; border:1px solid #ced4da; font-size:14px;">
-          <span style="color:#6c757d;">ถึง</span>
-          <input type="date" id="endDate" onchange="applyDateFilter()" style="padding:8px 12px; border-radius:6px; border:1px solid #ced4da; font-size:14px;">
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button onclick="setDateRange('today')" class="btn-date-filter">วันนี้</button>
-          <button onclick="setDateRange('yesterday')" class="btn-date-filter">เมื่อวาน</button>
-          <button onclick="setDateRange('week')" class="btn-date-filter">7 วันล่าสุด</button>
-          <button onclick="setDateRange('month')" class="btn-date-filter">30 วันล่าสุด</button>
-          <button onclick="setDateRange('all')" class="btn-date-filter">ทั้งหมด</button>
-        </div>
-      </div>
-    </div>
+
     
-    <div style="width:100%; margin-top:10px; font-size:13px; color:#666; display:flex; justify-content:space-between; align-items:center;">
-      <span>อัปเดตล่าสุด: <span id="lastUpdate">-</span></span>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-          <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()">
-          <span>รีเฟรชอัตโนมัติ</span>
-        </label>
-        <select id="refreshInterval" onchange="updateRefreshInterval()" style="padding:5px 10px; border-radius:5px; border:1px solid #ddd; font-size:13px;">
-          <option value="5">5 วินาที</option>
-          <option value="10">10 วินาที</option>
-          <option value="30" selected>30 วินาที</option>
-          <option value="60">1 นาที</option>
-        </select>
-      </div>
-    </div>
+
   </div>
 
   <!-- Stats Cards -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">จำนวนผู้ที่เข้าใช้ทั้งหมด</div>
-        <div class="stat-icon" style="background: #e3f2fd;">👥</div>
+        <div class="stat-title">โหมดตัวเลข</div>
       </div>
       <div class="stat-value" id="totalVisits">0</div>
       <div class="stat-change positive">
-        <span>↑</span>
-        <span id="visitChange">0%</span> จากเมื่อวาน
+        <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-card-header">
-        <div class="stat-title">จำนวนเกมที่ทดสอบ</div>
-        <div class="stat-icon" style="background: #f3e5f5;">📘</div>
-      </div>
-      <div class="stat-value" id="totalGames">0</div>
-      <div class="stat-change positive">
-        <span>↑</span>
-        <span id="gameChange">0%</span> จากเมื่อวาน
-      </div>
-    </div>
+  
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">เวลาในการใช้งานของผู้ใช้ทั้งหมด</div>
-        <div class="stat-icon" style="background: #fff3e0;">⏱️</div>
+        <div class="stat-title">โหมดทั่วไป</div>
       </div>
         <div class="stat-value" id="avgTime">0</div>
-        <div class="time-label">ชั่วโมง</div>
+        <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-title">จำนวนผู้ที่ใช้งานอยู่</div>
-        <div class="stat-icon" style="background: #e8f5e9;">✅</div>
+        <div class="stat-title">โหมดภาษา</div>
       </div>
       <div class="stat-value" id="activeUsers">0</div>
       <div class="stat-change positive">
-        <span>↑</span>
-        <span id="activeChange">0%</span> จากเมื่อวาน
+                <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
+
       </div>
     </div>
   </div>
 
   <!-- Charts -->
   <div class="charts-grid">
-    <div class="chart-card">
-      <h3>📈 สถิติการทดสอบแยกตามประเภท</h3>
-      <canvas id="gameTypeChart"></canvas>
-    </div>
 
     <div class="chart-card">
-      <h3>📊 การใช้งานรายวัน (7 วันล่าสุด)</h3>
+      <h3>จำนวนการใช้งาน (7 วันล่าสุด)</h3>
       <canvas id="dailyUsageChart"></canvas>
     </div>
   </div>
@@ -150,9 +105,8 @@
 
   <!-- Feedback Section -->
   <div class="table-card" style="margin-top: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
       <h3>💬 ข้อเสนอแนะจากผู้ใช้งาน</h3>
-      <button class="btn btn-primary" onclick="refreshFeedback()" id="refreshFeedbackBtn">🔄 รีเฟรช</button>
     </div>
     <div id="feedbackContainer" style="max-height: 600px; overflow-y: auto;">
       <p style="text-align: center; color: #999; padding: 40px;">กำลังโหลดข้อเสนอแนะ...</p>
@@ -614,9 +568,17 @@ class Dashboard {
   }
 
   updateLastUpdateTime() {
+    // แสดงวันเดือนปีและเวลาในโซนเวลา UTC+7 (Asia/Bangkok)
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('th-TH');
-    document.getElementById('lastUpdate').textContent = timeStr;
+    const opts = { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const dt = new Intl.DateTimeFormat('th-TH', opts).format(now);
+    const el = document.getElementById('lastUpdate');
+    if (el) {
+      el.textContent = 'อัปเดตล่าสุด: ' + dt;
+      console.log('Updated #lastUpdate:', dt);
+    } else {
+      console.warn('#lastUpdate element not found in DOM');
+    }
   }
 
   updateStatsCards(data) {
@@ -731,39 +693,60 @@ class Dashboard {
   createDailyUsageChart(data) {
     const dailyVisits = data.dailyVisits || {};
     const last7Days = this.getLast7Days();
-    const values = last7Days.map(date => dailyVisits[date] || 0);
-    
+
+    const gamemathData = last7Days.map(date => dailyVisits.math?.[date] || 0);
+    const gamepictureData = last7Days.map(date => dailyVisits.picture?.[date] || 0);
+    const gamethaiData = last7Days.map(date => dailyVisits.thai?.[date] || 0);
+
     const ctx = document.getElementById('dailyUsageChart').getContext('2d');
     this.charts.dailyUsage = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
-        labels: last7Days.map(date => {
-          const d = new Date(date);
-          return `${d.getDate()}/${d.getMonth() + 1}`;
-        }),
-        datasets: [{
-          label: 'จำนวนการเข้าชม',
-          data: values,
-          borderColor: '#667eea',
-          backgroundColor: 'rgba(102, 126, 234, 0.1)',
-          tension: 0.4,
-          fill: true
-        }]
+        labels: last7Days,
+        datasets: [
+          {
+            label: 'โหมดตัวเลข',
+            data: gamemathData,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'โหมดทั่วไป',
+            data: gamepictureData,
+            backgroundColor: 'rgba(153, 102, 255, 0.6)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'โหมดภาษาไทย',
+            data: gamethaiData,
+            backgroundColor: 'rgba(255, 159, 64, 0.6)',
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1,
+          },
+        ],
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
         plugins: {
           legend: {
-            display: false
-          }
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'จำนวนการใช้งานย้อนหลัง 7 วัน',
+          },
         },
         scales: {
+          x: {
+            beginAtZero: true,
+          },
           y: {
-            beginAtZero: true
-          }
-        }
-      }
+            beginAtZero: true,
+          },
+        },
+      },
     });
   }
 
@@ -940,370 +923,186 @@ function clearAllData() {
 // Dashboard จะถูกสร้างหลังจาก login สำเร็จแล้ว
 let dashboardInstance = null;
 let refreshIntervalId = null;
-let refreshIntervalSeconds = 30;
+let refreshIntervalSeconds = 10;
 // Separate polling for active users (lightweight)
 let activeUsersIntervalId = null;
 let activeUsersPollSeconds = 10; // default 10 seconds
 
-// ฟังก์ชันรีเฟรชข้อมูล
-function refreshData() {
-  if (!dashboardInstance) return;
-  
-  const btn = document.getElementById('refreshBtn');
-  btn.disabled = true;
-  btn.innerHTML = '⏳ กำลังรีเฟรช...';
-  
-  setTimeout(() => {
-    dashboardInstance.loadDashboard();
-    btn.disabled = false;
-    btn.innerHTML = '🔄 รีเฟรช';
-    
-    // แสดง animation สั้นๆ
-    btn.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-      btn.style.transform = 'rotate(0deg)';
-    }, 300);
-  }, 500);
-}
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // กำหนดค่าเริ่มต้นเป็นวันที่ปัจจุบันเสมอเมื่อโหลดหน้าเว็บ
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0]; // รูปแบบ YYYY-MM-DD
 
-// สลับการรีเฟรชอัตโนมัติ
-function toggleAutoRefresh() {
-  const checkbox = document.getElementById('autoRefresh');
-  
-  if (checkbox.checked) {
-    startAutoRefresh();
-  } else {
-    stopAutoRefresh();
-  }
-}
+      const datePicker = document.getElementById('datePicker');
+      if (datePicker) {
+        datePicker.value = formattedDate; // ตั้งค่าเริ่มต้นเป็นวันที่ปัจจุบัน
 
-// อัปเดตช่วงเวลารีเฟรช
-function updateRefreshInterval() {
-  const select = document.getElementById('refreshInterval');
-  refreshIntervalSeconds = parseInt(select.value);
-  
-  // รีสตาร์ทการรีเฟรชอัตโนมัติถ้าเปิดอยู่
-  if (document.getElementById('autoRefresh').checked) {
-    stopAutoRefresh();
-    startAutoRefresh();
-  }
-}
-
-// เริ่มการรีเฟรชอัตโนมัติ
-function startAutoRefresh() {
-  stopAutoRefresh(); // ล้าง interval เก่าก่อน
-  
-  refreshIntervalId = setInterval(() => {
-    if (dashboardInstance && localStorage.getItem(AUTH_KEY)) {
-      dashboardInstance.loadDashboard();
-    }
-  }, refreshIntervalSeconds * 1000);
-}
-
-// หยุดการรีเฟรชอัตโนมัติ
-function stopAutoRefresh() {
-  if (refreshIntervalId) {
-    clearInterval(refreshIntervalId);
-    refreshIntervalId = null;
-  }
-}
-
-// เพิ่ม CSS สำหรับปุ่มรีเฟรช
-const refreshStyle = document.createElement('style');
-refreshStyle.textContent = `
-  #refreshBtn {
-    transition: transform 0.3s ease;
-  }
-  
-  #refreshBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-document.head.appendChild(refreshStyle);
-
-// เริ่มต้น Dashboard และ Auto Refresh หลัง Login
-function initDashboard() {
-  dashboardInstance = new Dashboard();
-  startAutoRefresh();
-}
-
-// อัปเดตฟังก์ชัน checkPassword เพื่อเริ่ม Dashboard
-const originalCheckPassword = checkPassword;
-checkPassword = function() {
-  const password = document.getElementById('passwordInput').value;
-  const errorMsg = document.getElementById('errorMessage');
-  
-  if (password === ANALYTICS_PASSWORD) {
-    // บันทึกการเข้าสู่ระบบ
-    localStorage.setItem(AUTH_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      authenticated: true
-    }));
-    
-    errorMsg.textContent = '';
-    document.getElementById('passwordInput').value = '';
-    showDashboard();
-    
-    // โหลด Dashboard และเริ่ม Auto Refresh
-    initDashboard();
-  } else {
-    errorMsg.textContent = '❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('passwordInput').focus();
-    
-    // เขย่ากล่อง
-    const modal = document.getElementById('loginModal').firstElementChild;
-    modal.style.animation = 'shake 0.5s';
-    setTimeout(() => {
-      modal.style.animation = '';
-    }, 500);
-  }
-};
-
-// อัปเดตฟังก์ชัน checkAuth
-const originalCheckAuth = checkAuth;
-checkAuth = function() {
-  const auth = localStorage.getItem(AUTH_KEY);
-  if (auth) {
-    const authData = JSON.parse(auth);
-    const now = Date.now();
-    
-    // ตรวจสอบว่ายังไม่หมดเวลา
-    if (now - authData.timestamp < AUTH_TIMEOUT) {
-      showDashboard();
-      initDashboard(); // เริ่ม Dashboard
-      return true;
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-    }
-  }
-  
-  showLogin();
-  return false;
-};
-
-// เรียกใช้งาน
-checkAuth();
-
-// ฟังก์ชันโหลดข้อเสนอแนะจาก Backend
-async function loadFeedback() {
-  const container = document.getElementById('feedbackContainer');
-  
-  try {
-    const response = await fetch('/api/feedback');
-    const result = await response.json();
-    
-    if (result.success && result.data.length > 0) {
-      container.innerHTML = result.data.reverse().map((item, index) => `
-        <div style="background: ${index % 2 === 0 ? '#f9f9f9' : '#fff'}; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #667eea;">
-          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-            <div>
-              <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
-                #${item.id}
-              </span>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 13px; color: #666;">
-                📅 ${item.createdAt}
-              </div>
-              <div style="font-size: 11px; color: #999; margin-top: 2px;">
-                ${new Date(item.timestamp).toLocaleString('th-TH')}
-              </div>
-            </div>
-          </div>
-          <div style="padding: 15px; background: white; border-radius: 8px; border: 1px solid #eee; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
-            ${escapeHtml(item.feedback)}
-          </div>
-        </div>
-      `).join('');
-    } else {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 60px 20px; color: #999;">
-          <div style="font-size: 48px; margin-bottom: 20px;">💭</div>
-          <p style="font-size: 18px; margin: 0;">ยังไม่มีข้อเสนอแนะ</p>
-          <p style="font-size: 14px; margin-top: 10px;">ข้อเสนอแนะจากผู้ใช้จะแสดงที่นี่</p>
-        </div>
-      `;
-    }
-  } catch (error) {
-    console.error('Error loading feedback:', error);
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #e74c3c;">
-        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-        <p style="font-size: 16px;">ไม่สามารถโหลดข้อเสนอแนะได้</p>
-        <p style="font-size: 14px; color: #999; margin-top: 10px;">กรุณาตรวจสอบว่า Server กำลังทำงานอยู่</p>
-      </div>
-    `;
-  }
-}
-
-// ฟังก์ชันรีเฟรชข้อเสนอแนะ
-async function refreshFeedback() {
-  const btn = document.getElementById('refreshFeedbackBtn');
-  btn.disabled = true;
-  btn.innerHTML = '⏳ กำลังโหลด...';
-  
-  await loadFeedback();
-  
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.innerHTML = '🔄 รีเฟรช';
-  }, 500);
-}
-
-// ฟังก์ชัน escape HTML เพื่อป้องกัน XSS
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// โหลดข้อเสนอแนะเมื่อ Dashboard พร้อม
-const originalInitDashboard = initDashboard;
-initDashboard = function() {
-  originalInitDashboard();
-  loadFeedback();
-  // เริ่ม polling ค่า active users ทุก ๆ activeUsersPollSeconds วินาที
-  startActiveUsersPolling(activeUsersPollSeconds);
-  // ไม่เรียก initDateFilter() เพื่อให้แสดงข้อมูลทั้งหมดตั้งแต่เริ่มต้น
-  
-  // เพิ่มการรีเฟรชข้อเสนอแนะอัตโนมัติ
-  setInterval(() => {
-    if (document.getElementById('autoRefresh')?.checked) {
-      loadFeedback();
-    }
-  }, refreshIntervalSeconds * 1000);
-};
-
-// (ประกาศตัวแปร Date Filter ไว้ด้านบนแล้ว)
-
-// เริ่มต้น Date Filter (ไม่ทำอะไร - ให้แสดงข้อมูลทั้งหมด)
-function initDateFilter() {
-  // ไม่ตั้งค่าอะไร เพื่อให้แสดงข้อมูลทั้งหมดตามค่าเริ่มต้น
-  console.log('Date Filter พร้อมใช้งาน - กรุณาเลือกช่วงเวลาที่ต้องการ');
-}
-
-// ตั้งค่าช่วงเวลา
-function setDateRange(range) {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
-  
-  const startDate = new Date(today);
-  const endDate = new Date(today);
-  
-  switch(range) {
-    case 'today':
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case 'yesterday':
-      startDate.setDate(today.getDate() - 1);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setDate(today.getDate() - 1);
-      endDate.setHours(23, 59, 59, 999);
-      break;
-    case 'week':
-      startDate.setDate(today.getDate() - 7);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case 'month':
-      startDate.setDate(today.getDate() - 30);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case 'all':
-      startDate.setFullYear(2000, 0, 1);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-  }
-  
-  const startInput = document.getElementById('startDate');
-  const endInput = document.getElementById('endDate');
-  
-  if (startInput && endInput) {
-    startInput.valueAsDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-    endInput.valueAsDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-  }
-  
-  applyDateFilter();
-}
-
-// ใช้งาน Date Filter
-function applyDateFilter() {
-  const startInput = document.getElementById('startDate');
-  const endInput = document.getElementById('endDate');
-  
-  if (!startInput || !endInput || !startInput.value || !endInput.value) {
-    return;
-  }
-  
-  currentStartDate = new Date(startInput.value);
-  currentStartDate.setHours(0, 0, 0, 0);
-  
-  currentEndDate = new Date(endInput.value);
-  currentEndDate.setHours(23, 59, 59, 999);
-  
-  // รีเฟรช Dashboard ด้วยข้อมูลที่กรอง
-  if (dashboardInstance) {
-    dashboardInstance.loadDashboard();
-  }
-}
-
-// ฟังก์ชันกรองข้อมูลตามวันที่
-function filterDataByDate(data) {
-  // ถ้าไม่มีการเลือกวันที่ ให้แสดงข้อมูลทั้งหมด
-  if (!currentStartDate || !currentEndDate) {
-    console.log('ไม่มีการกรองวันที่ - แสดงข้อมูลทั้งหมด');
-    return data;
-  }
-  
-  console.log('กรองข้อมูลตั้งแต่', currentStartDate, 'ถึง', currentEndDate);
-  
-  const filtered = {...data};
-  
-  // กรองข้อมูลการเล่นเกม
-  if (filtered.gamePlays && Array.isArray(filtered.gamePlays)) {
-    filtered.gamePlays = filtered.gamePlays.filter(play => {
-      if (!play.timestamp) return false;
-      const playDate = new Date(play.timestamp);
-      return playDate >= currentStartDate && playDate <= currentEndDate;
-    });
-    
-    // อัพเดทจำนวนเกมทั้งหมด
-    filtered.totalGames = filtered.gamePlays.length;
-    
-    // คำนวณเวลาเฉลี่ยใหม่
-    if (filtered.gamePlays.length > 0) {
-      const totalDuration = filtered.gamePlays.reduce((sum, play) => sum + (play.duration || 0), 0);
-      filtered.avgDuration = Math.round(totalDuration / filtered.gamePlays.length);
-    } else {
-      filtered.avgDuration = 0;
-    }
-  }
-  
-  // กรอง dailyVisits
-  if (filtered.dailyVisits) {
-    const filteredVisits = {};
-    Object.keys(filtered.dailyVisits).forEach(dateStr => {
-      const visitDate = new Date(dateStr + 'T00:00:00');
-      if (visitDate >= currentStartDate && visitDate <= currentEndDate) {
-        filteredVisits[dateStr] = filtered.dailyVisits[dateStr];
+        // เพิ่ม event listener เพื่อดึงข้อมูลเมื่อเปลี่ยนวันที่
+        datePicker.addEventListener('change', async (event) => {
+          const selectedDate = event.target.value;
+          await fetchAndUpdateData(selectedDate);
+        });
       }
-    });
-    filtered.dailyVisits = filteredVisits;
-    
-    // อัพเดท totalVisits
-    filtered.totalVisits = Object.values(filteredVisits).reduce((sum, count) => sum + count, 0);
-  }
-  
-  console.log('ข้อมูลหลังกรอง:', {
-    totalGames: filtered.totalGames,
-    totalVisits: filtered.totalVisits,
-    gamePlaysCount: filtered.gamePlays ? filtered.gamePlays.length : 0
-  });
-  
-  return filtered;
-}
 
+      // ดึงข้อมูลครั้งแรกด้วยวันที่ปัจจุบัน
+      await fetchAndUpdateData(formattedDate);
+    } catch (error) {
+      console.error('Error initializing datepicker or fetching data:', error);
+    }
+  });
+
+  async function fetchAndUpdateData(date) {
+    try {
+      console.log(`Fetching data for date: ${date}`); // Debugging log
+
+      // ดึงข้อมูลจาก API gamemath
+      const gameMathResponse = await fetch(`http://localhost:3000/api/usage-gamemath?date=${date}`);
+      const gameMathData = await gameMathResponse.json();
+      console.log(`Data from usage-gamemath on ${date}:`, gameMathData);
+
+      if (gameMathData.success) {
+        const totalVisitsElement = document.getElementById('totalVisits');
+        totalVisitsElement.textContent = gameMathData.count || 0;
+      }
+
+      // ดึงข้อมูลจาก API gamepicture
+      const gamePictureResponse = await fetch(`http://localhost:3000/api/usage-gamepicture?date=${date}`);
+      const gamePictureData = await gamePictureResponse.json();
+      console.log(`Data from usage-gamepicture on ${date}:`, gamePictureData);
+
+      if (gamePictureData.success && Array.isArray(gamePictureData.data)) {
+        const avgTimeElement = document.getElementById('avgTime');
+        avgTimeElement.textContent = gamePictureData.data.reduce((sum, item) => sum + item.count, 0);
+      } else {
+        console.error('Invalid data format for gamePictureData:', gamePictureData);
+        const avgTimeElement = document.getElementById('avgTime');
+        avgTimeElement.textContent = gamePictureData.count || 0; // ใช้ count หากไม่มี data array
+      }
+
+      // ดึงข้อมูลจาก API gamethai
+      const gameThaiResponse = await fetch(`http://localhost:3000/api/usage-gamethai?date=${date}`);
+      const gameThaiData = await gameThaiResponse.json();
+      console.log(`Data from usage-gamethai on ${date}:`, gameThaiData);
+
+      if (gameThaiData.success && Array.isArray(gameThaiData.data)) {
+        const activeUsersElement = document.getElementById('activeUsers');
+        activeUsersElement.textContent = gameThaiData.data.reduce((sum, item) => sum + item.count, 0);
+      } else {
+        console.error('Invalid data format for gameThaiData:', gameThaiData);
+        const activeUsersElement = document.getElementById('activeUsers');
+        activeUsersElement.textContent = gameThaiData.count || 0; // ใช้ count หากไม่มี data array
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const fetchUsageData = async (api, date) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/${api}?date=${date}`);
+        const data = await response.json();
+        console.log(`Data from ${api} on ${date}:`, data); // Debugging log
+
+        if (data.success) {
+          if (Array.isArray(data.data)) {
+            return data.data.length; // Use the length of the array as the count
+          }
+          return data.count || 0; // Fallback to count if available
+        }
+        return 0;
+      } catch (error) {
+        console.error(`Error fetching data from ${api}:`, error);
+        return 0;
+      }
+    };
+
+    const fetchLast7DaysData = async () => {
+      const today = new Date();
+      const labels = [];
+      const gamemathData = [];
+      const gamepictureData = [];
+      const gamethaiData = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const formattedDate = date.toISOString().split("T")[0];
+        labels.push(formattedDate);
+
+        gamemathData.push(await fetchUsageData("usage-gamemath", formattedDate));
+        gamepictureData.push(await fetchUsageData("usage-gamepicture", formattedDate));
+        gamethaiData.push(await fetchUsageData("usage-gamethai", formattedDate));
+      }
+
+      console.log("Labels:", labels);
+      console.log("Game Math Data:", gamemathData);
+      console.log("Game Picture Data:", gamepictureData);
+      console.log("Game Thai Data:", gamethaiData);
+
+      return { labels, gamemathData, gamepictureData, gamethaiData };
+    };
+
+    const renderChart = async () => {
+      const { labels, gamemathData, gamepictureData, gamethaiData } = await fetchLast7DaysData();
+
+      const ctx = document.getElementById("dailyUsageChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "โหมดตัวเลข",
+              data: gamemathData,
+              backgroundColor: "rgba(75, 192, 192, 0.6)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+            {
+              label: "โหมดทั่วไป",
+              data: gamepictureData,
+              backgroundColor: "rgba(153, 102, 255, 0.6)",
+              borderColor: "rgba(153, 102, 255, 1)",
+              borderWidth: 1,
+            },
+            {
+              label: "โหมดภาษาไทย",
+              data: gamethaiData,
+              backgroundColor: "rgba(255, 159, 64, 0.6)",
+              borderColor: "rgba(255, 159, 64, 1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "จำนวนการใช้งานย้อนหลัง 7 วัน",
+            },
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+            },
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    };
+
+    renderChart();
+  });
 </script>
 
 </body>
