@@ -526,5 +526,25 @@ app.get('/api/gamematch', async (req, res) => {
   }
 });
 
+// API สำหรับดึงข้อมูลจาก collection feedbacks
+app.get('/api/feedbacks', async (req, res) => {
+  try {
+    const client = await getMongoClient();
+    if (!client) {
+      console.error('MongoDB connection failed');
+      return res.status(500).json({ success: false, message: 'MongoDB connection failed' });
+    }
+
+    const db = client.db(process.env.MONGODB_DB || 'Huroa2');
+    const coll = db.collection('feedbacks');
+
+    const feedbacks = await coll.find({}).sort({ timestamp: -1 }).toArray();
+    res.json({ success: true, data: feedbacks });
+  } catch (error) {
+    console.error('Error fetching feedbacks:', error);
+    res.status(500).json({ success: false, message: 'Error fetching feedbacks' });
+  }
+});
+
 const PORT = process.env.PORT || 4000; // Changed default port to 4000
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
