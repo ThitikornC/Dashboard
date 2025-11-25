@@ -928,6 +928,8 @@ let refreshIntervalSeconds = 10;
 let activeUsersIntervalId = null;
 let activeUsersPollSeconds = 10; // default 10 seconds
 
+const apiBaseUrl = 'https://dashboard-production-2af3.up.railway.app/api'; // URL ของ Railway
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
       // กำหนดค่าเริ่มต้นเป็นวันที่ปัจจุบันเสมอเมื่อโหลดหน้าเว็บ
@@ -957,7 +959,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log(`Fetching data for date: ${date}`); // Debugging log
 
       // ดึงข้อมูลจาก API gamemath
-      const gameMathResponse = await fetch(`http://localhost:3000/api/usage-gamemath?date=${date}`);
+      const gameMathResponse = await fetch(`${apiBaseUrl}/usage-gamemath?date=${date}`);
       const gameMathData = await gameMathResponse.json();
       console.log(`Data from usage-gamemath on ${date}:`, gameMathData);
 
@@ -967,7 +969,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // ดึงข้อมูลจาก API gamepicture
-      const gamePictureResponse = await fetch(`http://localhost:3000/api/usage-gamepicture?date=${date}`);
+      const gamePictureResponse = await fetch(`${apiBaseUrl}/usage-gamepicture?date=${date}`);
       const gamePictureData = await gamePictureResponse.json();
       console.log(`Data from usage-gamepicture on ${date}:`, gamePictureData);
 
@@ -981,7 +983,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // ดึงข้อมูลจาก API gamethai
-      const gameThaiResponse = await fetch(`http://localhost:3000/api/usage-gamethai?date=${date}`);
+      const gameThaiResponse = await fetch(`${apiBaseUrl}/usage-gamethai?date=${date}`);
       const gameThaiData = await gameThaiResponse.json();
       console.log(`Data from usage-gamethai on ${date}:`, gameThaiData);
 
