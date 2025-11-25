@@ -1005,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener("DOMContentLoaded", async () => {
     const fetchUsageData = async (api, date) => {
       try {
-        const response = await fetch(`http://localhost:3000/api/${api}?date=${date}`);
+        const response = await fetch(`${apiBaseUrl}/${api}?date=${date}`);
         const data = await response.json();
         console.log(`Data from ${api} on ${date}:`, data); // Debugging log
 
