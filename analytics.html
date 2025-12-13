@@ -101,6 +101,14 @@
     </div>
   </div>
 
+  <!-- Debug API responses (visible while debugging) -->
+  <div id="apiDebug" style="margin-top:20px; background:#fff; padding:12px; border-radius:8px; border:1px solid #eee; font-size:13px;">
+    <strong>Debug: API responses</strong>
+    <pre id="debugGameMath" style="white-space:pre-wrap; margin-top:8px; color:#222; background:#f7f7f7; padding:8px; border-radius:6px; max-height:120px; overflow:auto;">gameMath: -</pre>
+    <pre id="debugGamePicture" style="white-space:pre-wrap; margin-top:8px; color:#222; background:#f7f7f7; padding:8px; border-radius:6px; max-height:120px; overflow:auto;">gamePicture: -</pre>
+    <pre id="debugGameThai" style="white-space:pre-wrap; margin-top:8px; color:#222; background:#f7f7f7; padding:8px; border-radius:6px; max-height:120px; overflow:auto;">gameThai: -</pre>
+  </div>
+
 
 
   <!-- Feedback Section -->
@@ -928,7 +936,10 @@ let refreshIntervalSeconds = 10;
 let activeUsersIntervalId = null;
 let activeUsersPollSeconds = 10; // default 10 seconds
 
-const apiBaseUrl = 'https://dashboard-production-2af3.up.railway.app/api'; // URL ของ Railway
+// ใช้ API แบบ relative (same-origin) เพื่อหลีกเลี่ยงปัญหา CSP/CORS เมื่อหน้าเว็บถูกเสิร์ฟจากเซิร์ฟเวอร์นี้
+// หากต้องการเรียก API ที่โฮสต์บน Railway โดยตรง ให้เปลี่ยนเป็น URL เต็ม เช่น
+// const apiBaseUrl = 'https://dashboard-production-2af3.up.railway.app/api';
+const apiBaseUrl = '/api';
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -962,38 +973,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       const gameMathResponse = await fetch(`${apiBaseUrl}/usage-gamemath?date=${date}`);
       const gameMathData = await gameMathResponse.json();
       console.log(`Data from usage-gamemath on ${date}:`, gameMathData);
+      // show debug on page
+      const dbgGM = document.getElementById('debugGameMath');
+      if (dbgGM) dbgGM.textContent = JSON.stringify(gameMathData, null, 2);
 
       if (gameMathData.success) {
         const totalVisitsElement = document.getElementById('totalVisits');
-        totalVisitsElement.textContent = gameMathData.count || 0;
+        // ถ้ามีฟิลด์ count ให้ใช้ ถ้า response มี data เป็น array ให้รวม count ของแต่ละรายการ
+        let gmCount = 0;
+        if (Array.isArray(gameMathData.data)) {
+          gmCount = gameMathData.data.reduce((s, item) => s + (item.count || 0), 0);
+        } else {
+          gmCount = Number(gameMathData.count) || 0;
+        }
+        totalVisitsElement.textContent = gmCount;
       }
 
       // ดึงข้อมูลจาก API gamepicture
       const gamePictureResponse = await fetch(`${apiBaseUrl}/usage-gamepicture?date=${date}`);
       const gamePictureData = await gamePictureResponse.json();
       console.log(`Data from usage-gamepicture on ${date}:`, gamePictureData);
-
-      if (gamePictureData.success && Array.isArray(gamePictureData.data)) {
+      const dbgGP = document.getElementById('debugGamePicture');
+      if (dbgGP) dbgGP.textContent = JSON.stringify(gamePictureData, null, 2);
+      if (gamePictureData.success) {
         const avgTimeElement = document.getElementById('avgTime');
-        avgTimeElement.textContent = gamePictureData.data.reduce((sum, item) => sum + item.count, 0);
-      } else {
-        console.error('Invalid data format for gamePictureData:', gamePictureData);
-        const avgTimeElement = document.getElementById('avgTime');
-        avgTimeElement.textContent = gamePictureData.count || 0; // ใช้ count หากไม่มี data array
+        let gpCount = 0;
+        if (Array.isArray(gamePictureData.data)) {
+          gpCount = gamePictureData.data.reduce((sum, item) => sum + (item.count || 0), 0);
+        } else {
+          gpCount = Number(gamePictureData.count) || 0;
+        }
+        avgTimeElement.textContent = gpCount;
       }
 
       // ดึงข้อมูลจาก API gamethai
       const gameThaiResponse = await fetch(`${apiBaseUrl}/usage-gamethai?date=${date}`);
       const gameThaiData = await gameThaiResponse.json();
       console.log(`Data from usage-gamethai on ${date}:`, gameThaiData);
-
-      if (gameThaiData.success && Array.isArray(gameThaiData.data)) {
+      const dbgGT = document.getElementById('debugGameThai');
+      if (dbgGT) dbgGT.textContent = JSON.stringify(gameThaiData, null, 2);
+      if (gameThaiData.success) {
         const activeUsersElement = document.getElementById('activeUsers');
-        activeUsersElement.textContent = gameThaiData.data.reduce((sum, item) => sum + item.count, 0);
-      } else {
-        console.error('Invalid data format for gameThaiData:', gameThaiData);
-        const activeUsersElement = document.getElementById('activeUsers');
-        activeUsersElement.textContent = gameThaiData.count || 0; // ใช้ count หากไม่มี data array
+        let gtCount = 0;
+        if (Array.isArray(gameThaiData.data)) {
+          gtCount = gameThaiData.data.reduce((sum, item) => sum + (item.count || 0), 0);
+        } else {
+          gtCount = Number(gameThaiData.count) || 0;
+        }
+        activeUsersElement.textContent = gtCount;
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -1046,11 +1073,19 @@ const fetchLast7DaysData = async () => {
   return { labels, gamemathData, gamepictureData, gamethaiData };
 };
 
+let dailyUsageChartInstance = null;
+
 const renderChart = async () => {
   const { labels, gamemathData, gamepictureData, gamethaiData } = await fetchLast7DaysData();
 
   const ctx = document.getElementById("dailyUsageChart").getContext("2d");
-  new Chart(ctx, {
+  // Destroy previous chart instance if exists to avoid "Canvas is already in use"
+  if (dailyUsageChartInstance) {
+    try { dailyUsageChartInstance.destroy(); } catch (e) { /* ignore */ }
+    dailyUsageChartInstance = null;
+  }
+
+  dailyUsageChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
@@ -1101,7 +1136,7 @@ const renderChart = async () => {
   });
 };
 
-renderChart();
+// renderChart() will be called after DOM loaded; do not auto-call here to avoid duplicates
 
 // Call the graph rendering function after DOM content is loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1110,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and display feedback data
   try {
     const feedbackContainer = document.getElementById('feedbackContainer');
-    const response = await fetch('https://dashboard-production-2af3.up.railway.app/api/feedbacks'); // ใช้ URL ของ Railway
+    const response = await fetch(apiBaseUrl + '/feedbacks');
     const data = await response.json();
 
     if (data.success && Array.isArray(data.data)) {

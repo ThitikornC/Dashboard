@@ -248,34 +248,44 @@ app.get('/api/usage-gamemath', async (req, res) => {
     const endOfDay = new Date(targetDate);
     endOfDay.setUTCHours(23, 59, 59, 999);
 
-    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()} using timestamp`);
+    const dateStr = startOfDay.toISOString().split('T')[0];
 
-    // ตรวจสอบข้อมูลทั้งหมดในฐานข้อมูล
-    const allData = await coll.find({}).toArray();
-    console.log('All data in the collection:', allData);
+    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()} (support day/created_at/timestamp)`);
 
-    // ตรวจสอบข้อมูลที่อยู่ในช่วงเวลาที่ฟิลเตอร์
-    const rawData = await coll.find({
-      timestamp: { $gte: startOfDay, $lte: endOfDay }
-    }).toArray();
-
-    console.log('Raw data fetched from database:', rawData);
-
-    if (rawData.length === 0) {
-      console.log('No raw data found in the database for the specified date range');
-      return res.json({ success: true, date: startOfDay.toISOString().split('T')[0], message: 'No data found', count: 0 });
-    }
-
+    // Aggregation pipeline that supports documents with:
+    // - a `day` field (string YYYY-MM-DD)
+    // - a `created_at` ISO string or Date
+    // - a `timestamp` ISO string or Date
+    // Also sum `count` field when present, otherwise count documents
     const pipeline = [
       {
+        $addFields: {
+          tsDate: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $type: '$timestamp' }, 'date'] }, then: '$timestamp' },
+                { case: { $eq: [{ $type: '$timestamp' }, 'string'] }, then: { $toDate: '$timestamp' } },
+                { case: { $eq: [{ $type: '$created_at' }, 'date'] }, then: '$created_at' },
+                { case: { $eq: [{ $type: '$created_at' }, 'string'] }, then: { $toDate: '$created_at' } }
+              ],
+              default: null
+            }
+          },
+          dayField: '$day'
+        }
+      },
+      {
         $match: {
-          timestamp: { $gte: startOfDay, $lte: endOfDay }
+          $or: [
+            { dayField: dateStr },
+            { tsDate: { $gte: startOfDay, $lte: endOfDay } }
+          ]
         }
       },
       {
         $group: {
           _id: null,
-          count: { $sum: 1 }
+          count: { $sum: { $ifNull: ['$count', 1] } }
         }
       }
     ];
@@ -283,15 +293,10 @@ app.get('/api/usage-gamemath', async (req, res) => {
     console.log('Pipeline:', JSON.stringify(pipeline, null, 2));
 
     const data = await coll.aggregate(pipeline).toArray();
+    const count = data.length > 0 && data[0].count ? data[0].count : 0;
 
-    if (data.length === 0 || data[0].count === 0) {
-      console.log(`No data found for ${startOfDay.toISOString()} - ${endOfDay.toISOString()}`);
-      return res.json({ success: true, date: startOfDay.toISOString().split('T')[0], message: 'No data found', count: 0 });
-    }
-
-    const count = data[0].count;
-    console.log(`Data count for ${startOfDay.toISOString()} - ${endOfDay.toISOString()}:`, count);
-    res.json({ success: true, date: startOfDay.toISOString().split('T')[0], count });
+    console.log('Aggregated data for usage_gamemath_html:', data);
+    res.json({ success: true, date: dateStr, count });
   } catch (error) {
     console.error('Error fetching data for usage_gamemath_html:', error);
     res.status(500).json({ success: false, message: 'Error fetching data for usage_gamemath_html' });
@@ -330,24 +335,45 @@ app.get('/api/usage-gamepicture', async (req, res) => {
       endOfDay.setUTCHours(23, 59, 59, 999);
     }
 
-    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
+    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()} (support day/created_at/timestamp)`);
+
+    const dateStr = startOfDay.toISOString().split('T')[0];
 
     const pipeline = [
       {
+        $addFields: {
+          tsDate: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $type: '$timestamp' }, 'date'] }, then: '$timestamp' },
+                { case: { $eq: [{ $type: '$timestamp' }, 'string'] }, then: { $toDate: '$timestamp' } },
+                { case: { $eq: [{ $type: '$created_at' }, 'date'] }, then: '$created_at' },
+                { case: { $eq: [{ $type: '$created_at' }, 'string'] }, then: { $toDate: '$created_at' } }
+              ],
+              default: null
+            }
+          },
+          dayField: '$day'
+        }
+      },
+      {
         $match: {
-          timestamp: { $gte: startOfDay, $lte: endOfDay }
+          $or: [
+            { dayField: dateStr },
+            { tsDate: { $gte: startOfDay, $lte: endOfDay } }
+          ]
         }
       },
       {
         $group: {
           _id: null,
-          count: { $sum: 1 }
+          count: { $sum: { $ifNull: ['$count', 1] } }
         }
       }
     ];
 
     const data = await coll.aggregate(pipeline).toArray();
-    const count = data.length > 0 ? data[0].count : 0;
+    const count = data.length > 0 && data[0].count ? data[0].count : 0;
 
     console.log('Filtered and grouped data for usage_gamepicture_html:', data);
     res.json({ success: true, count });
@@ -389,24 +415,45 @@ app.get('/api/usage-gamethai', async (req, res) => {
       endOfDay.setUTCHours(23, 59, 59, 999);
     }
 
-    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
+    console.log(`Filtering data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()} (support day/created_at/timestamp)`);
+
+    const dateStr = startOfDay.toISOString().split('T')[0];
 
     const pipeline = [
       {
+        $addFields: {
+          tsDate: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $type: '$timestamp' }, 'date'] }, then: '$timestamp' },
+                { case: { $eq: [{ $type: '$timestamp' }, 'string'] }, then: { $toDate: '$timestamp' } },
+                { case: { $eq: [{ $type: '$created_at' }, 'date'] }, then: '$created_at' },
+                { case: { $eq: [{ $type: '$created_at' }, 'string'] }, then: { $toDate: '$created_at' } }
+              ],
+              default: null
+            }
+          },
+          dayField: '$day'
+        }
+      },
+      {
         $match: {
-          timestamp: { $gte: startOfDay, $lte: endOfDay }
+          $or: [
+            { dayField: dateStr },
+            { tsDate: { $gte: startOfDay, $lte: endOfDay } }
+          ]
         }
       },
       {
         $group: {
           _id: null,
-          count: { $sum: 1 }
+          count: { $sum: { $ifNull: ['$count', 1] } }
         }
       }
     ];
 
     const data = await coll.aggregate(pipeline).toArray();
-    const count = data.length > 0 ? data[0].count : 0;
+    const count = data.length > 0 && data[0].count ? data[0].count : 0;
 
     console.log('Filtered and grouped data for usage_gamethai_html:', data);
     res.json({ success: true, count });
@@ -543,6 +590,77 @@ app.get('/api/feedbacks', async (req, res) => {
   } catch (error) {
     console.error('Error fetching feedbacks:', error);
     res.status(500).json({ success: false, message: 'Error fetching feedbacks' });
+  }
+});
+
+// Temporary debug endpoint: return sample matched documents per usage collection for a given date
+app.get('/api/debug-usage-docs', async (req, res) => {
+  try {
+    const { date } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const dateStr = targetDate.toISOString().split('T')[0];
+
+    const startOfDay = new Date(dateStr);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(dateStr);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const client = await getMongoClient();
+    if (!client) return res.status(500).json({ success: false, message: 'MongoDB connection failed' });
+
+    const db = client.db(process.env.MONGODB_DB || 'Huroa2');
+
+    const collections = {
+      gamemath: 'usage_gamemath_html',
+      gamepicture: 'usage_gamepicture_html',
+      gamethai: 'usage_gamethai_html'
+    };
+
+    const results = {};
+
+    const mkPipeline = (collName) => ([
+      {
+        $addFields: {
+          tsDate: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $type: '$timestamp' }, 'date'] }, then: '$timestamp' },
+                { case: { $eq: [{ $type: '$timestamp' }, 'string'] }, then: { $toDate: '$timestamp' } },
+                { case: { $eq: [{ $type: '$created_at' }, 'date'] }, then: '$created_at' },
+                { case: { $eq: [{ $type: '$created_at' }, 'string'] }, then: { $toDate: '$created_at' } }
+              ],
+              default: null
+            }
+          },
+          dayField: '$day'
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { dayField: dateStr },
+            { tsDate: { $gte: startOfDay, $lte: endOfDay } }
+          ]
+        }
+      },
+      { $limit: 50 }
+    ]);
+
+    for (const [key, collName] of Object.entries(collections)) {
+      try {
+        const coll = db.collection(collName);
+        const docs = await coll.aggregate(mkPipeline(collName)).toArray();
+        results[key] = docs;
+      } catch (e) {
+        console.error('Error querying collection', collName, e && e.message);
+        results[key] = { error: String(e && e.message) };
+      }
+    }
+
+    res.json({ success: true, date: dateStr, results });
+  } catch (err) {
+    console.error('Error in /api/debug-usage-docs:', err);
+    res.status(500).json({ success: false, message: 'Internal error', error: String(err && err.message) });
   }
 });
 

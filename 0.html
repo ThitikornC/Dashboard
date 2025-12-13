@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบวิเคราะห์การใช้งาน - Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/analytics.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Login Modal -->
+<div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding:40px; border-radius:20px; border:6px solid #74640a; box-shadow:1px 1px 0 #000, -8px 6px #3b3305, 0 0 30px rgba(255,230,160,0.7); max-width:400px; width:90%; text-align:center;">
+    <h2 style="color:#333; margin-bottom:10px; font-size:28px;">🔒 เข้าสู่ระบบ Analytics</h2>
+    <p style="color:#666; margin-bottom:30px; font-size:14px;">กรุณาใส่รหัสผ่านเพื่อเข้าถึงข้อมูล</p>
+    
+    <input type="password" id="passwordInput" placeholder="รหัสผ่าน" 
+      style="width:100%; padding:15px; font-size:16px; border:2px solid #ddd; border-radius:10px; margin-bottom:10px; box-sizing:border-box; transition:border-color 0.3s;"
+      onkeypress="if(event.key==='Enter') checkPassword()">
+    
+    <div id="errorMessage" style="color:#e74c3c; font-size:14px; margin-bottom:15px; min-height:20px; font-weight:500;"></div>
+    
+    <button onclick="checkPassword()" 
+      style="width:100%; padding:15px; background:linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%); color:#000; border:4px solid #74640a; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.3s; margin-bottom:10px; box-shadow:1px 1px 0 #000, -4px 3px #3b3305;">
+      เข้าสู่ระบบ
+    </button>
+    
+    <button onclick="window.location.href='menu.html'" 
+      style="width:100%; padding:15px; background:linear-gradient(180deg, #e74c3c 0%, #c0392b 100%); color:white; border:4px solid #8b0000; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.3s; box-shadow:1px 1px 0 #000, -4px 3px #4a0000;">
+      ยกเลิก
+    </button>
+    
+    <div style="margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
+      <p style="color:#999; font-size:12px; margin:0;">รหัสผ่านเริ่มต้น: <code style="background:#f0f0f0; padding:2px 8px; border-radius:4px; color:#667eea;">240124</code></p>
+    </div>
+  </div>
+</div>
+
+<div class="container" id="dashboardContainer" style="display:none;">
+  <!-- Header -->
+  <div class="header">
+    <h1>Esspresso เทศบาลตำบลหัวรอ</h1>
+    <div class="header-actions">
+      <button class="btn btn-danger" onclick="logout()" style="background:#e67e22;">🔒 ออกจากระบบ</button>
+    </div>
+    <div style="width:100%; margin-top:10px; font-size:13px; color:#666; display:flex; justify-content:flex-start; align-items:center; gap:12px;">
+      <div id="lastUpdate" style="font-size:13px; color:#666;">อัปเดตล่าสุด: -</div>
+      <div id="currentUTC7" style="font-size:13px; color:#666;">UTC+7: -</div>
+    </div>
+    
+    <!-- Date Filter Section -->
+
+    
+
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-title">โหมดตัวเลข</div>
+      </div>
+      <div class="stat-value" id="totalVisits">0</div>
+      <div class="stat-change positive">
+        <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
+      </div>
+    </div>
+
+  
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-title">โหมดทั่วไป</div>
+      </div>
+        <div class="stat-value" id="avgTime">0</div>
+        <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-title">โหมดภาษา</div>
+      </div>
+      <div class="stat-value" id="activeUsers">0</div>
+      <div class="stat-change positive">
+                <div class="time-label">จำนวนที่เข้าใช้งาน(ครั้ง)</div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <h3>จำนวนการใช้งาน (7 วันล่าสุด)</h3>
+      <canvas id="dailyUsageChart"></canvas>
+    </div>
+  </div>
+
+
+
+  <!-- Feedback Section -->
+  <div class="table-card" style="margin-top: 30px;">
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+      <h3>💬 ข้อเสนอแนะจากผู้ใช้งาน</h3>
+    </div>
+    <div id="feedbackContainer" style="max-height: 600px; overflow-y: auto;">
+      <p style="text-align: center; color: #999; padding: 40px;">กำลังโหลดข้อเสนอแนะ...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ระบบรหัสผ่าน
+const ANALYTICS_PASSWORD = '240124'; // เปลี่ยนรหัสผ่านได้ที่นี่
+const AUTH_KEY = 'analyticsAuth';
+const AUTH_TIMEOUT = 3600000; // 1 ชั่วโมง (มิลลิวินาที)
+
+// ตัวแปรสำหรับ Date Filter (ประกาศไว้ก่อนจะมีการเรียกใช้)
+let currentStartDate = null;
+let currentEndDate = null;
+
+function checkAuth() {
+  const auth = localStorage.getItem(AUTH_KEY);
+  if (auth) {
+    const authData = JSON.parse(auth);
+    const now = Date.now();
+    
+    // ตรวจสอบว่ายังไม่หมดเวลา
+    if (now - authData.timestamp < AUTH_TIMEOUT) {
+      showDashboard();
+      return true;
+    } else {
+      localStorage.removeItem(AUTH_KEY);
+    }
+  }
+  
+  showLogin();
+  return false;
+}
+
+// ดึงจำนวนผู้ใช้จาก API ภายนอก (fallback: คืนค่า null เมื่อไม่สำเร็จ)
+async function fetchActiveClientsFromAPI() {
+  try {
+    // พยายามเรียก proxy ในเครื่องก่อน (same-origin) เพื่อหลีกเลี่ยงปัญหา CORS
+    let res;
+    try {
+      res = await fetch('/api/active-clients', { cache: 'no-store' });
+      console.debug('fetchActiveClientsFromAPI: tried local proxy /api/active-clients ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchActiveClientsFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      // ถ้า proxy ไม่พร้อม ให้ลองเรียก external โดยตรง (อาจโดน CORS)
+      res = await fetch('https://huaroa-production.up.railway.app/api/active-clients', { cache: 'no-store' });
+      console.debug('fetchActiveClientsFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
+
+    const json = await res.json();
+    console.debug('fetchActiveClientsFromAPI: raw json', json);
+    console.debug('fetchActiveClientsFromAPI: raw json', json);
+    // ให้ความสำคัญกับฟิลด์ `activeClients` (หรือ `active_clients`) เสมอเมื่อมี
+    // รองรับกรณีที่ response ถูกห่อด้วย { success: true, activeClients: 0 }
+    if (json && typeof json === 'object') {
+      if ('activeClients' in json || 'active_clients' in json) {
+        const val = json.activeClients ?? json.active_clients;
+        console.debug('fetchActiveClientsFromAPI: found activeClients field ->', val);
+        if (typeof val === 'number' && !Number.isNaN(val)) {
+          try { localStorage.setItem('activeClientsFromAPI', String(val)); } catch(e){}
+          return val;
+        }
+      }
+    }
+
+    // ถ้า response เป็นตัวเลขตรงๆ ให้ใช้
+    if (typeof json === 'number') {
+      try { localStorage.setItem('activeClientsFromAPI', String(json)); } catch(e){}
+      return json;
+    }
+
+    // รองรับ array หรือ property ทั่วไป เป็น fallback
+    if (Array.isArray(json)) return json.length;
+
+    if (json && typeof json === 'object') {
+      const candidate = json.count ?? json.total ?? json.clients ?? null;
+      if (typeof candidate === 'number' && !Number.isNaN(candidate)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(candidate)); } catch(e){}
+        return candidate;
+      }
+      if (Array.isArray(json.data)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(json.data.length)); } catch(e){}
+        return json.data.length;
+      }
+      if (Array.isArray(json.clients)) {
+        try { localStorage.setItem('activeClientsFromAPI', String(json.clients.length)); } catch(e){}
+        return json.clients.length;
+      }
+    }
+
+    // ถ้าไม่พบค่า ให้เคลียร์ค่าเก่าใน localStorage และคืน null
+    try { localStorage.removeItem('activeClientsFromAPI'); } catch(e){}
+    return null;
+  } catch (err) {
+    console.error('Error fetching active clients from API:', err);
+    try { localStorage.removeItem('activeClientsFromAPI'); } catch(e){}
+    return null;
+  }
+}
+
+// ดึงข้อมูลผู้ใช้แบบ distinct จาก endpoint /status/active-clients
+async function fetchDistinctClientsFromAPI() {
+  try {
+    let res;
+    try {
+      res = await fetch('/status/active-clients', { cache: 'no-store' });
+      console.debug('fetchDistinctClientsFromAPI: tried local proxy /status/active-clients ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchDistinctClientsFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      res = await fetch('https://huaroa-production.up.railway.app/status/active-clients', { cache: 'no-store' });
+      console.debug('fetchDistinctClientsFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
+
+    const json = await res.json();
+    console.debug('fetchDistinctClientsFromAPI: raw json', json);
+
+    // ให้ความสำคัญกับฟิลด์ totalEverUsers ก่อน (ตามที่ขอ)
+    if (json && typeof json === 'object') {
+      const ever = json.totalEverUsers ?? json.totalEver ?? json.total_users ?? null;
+      if (typeof ever === 'number' && !Number.isNaN(ever)) {
+        try { localStorage.setItem('totalEverUsersFromAPI', String(ever)); } catch(e){}
+        return ever;
+      }
+
+      // ถัดมาใช้ totalDistinctClientIds ถ้ามี
+      const totalDistinct = json.totalDistinctClientIds ?? json.totalDistinctClients ?? json.totalDistinct ?? null;
+      if (typeof totalDistinct === 'number' && !Number.isNaN(totalDistinct)) {
+        try { localStorage.setItem('totalDistinctFromAPI', String(totalDistinct)); } catch(e){}
+        return totalDistinct;
+      }
+
+      // ถ้ามี counts object ให้นับจำนวน key เป็น distinct ids
+      if (json.counts && typeof json.counts === 'object') {
+        try {
+          const keys = Object.keys(json.counts);
+          try { localStorage.setItem('totalDistinctFromAPI', String(keys.length)); } catch(e){}
+          return keys.length;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.debug('Error fetching distinct clients from API:', err);
+    return null;
+  }
+}
+
+// ดึงค่า average usage (averageMinutes) จาก endpoint /status/usage-average
+async function fetchUsageAverageFromAPI() {
+  try {
+    let res;
+    try {
+      res = await fetch('/status/usage-average', { cache: 'no-store' });
+      console.debug('fetchUsageAverageFromAPI: tried local proxy /status/usage-average ->', res.status);
+      if (!res.ok) throw new Error('Local proxy response was not ok');
+    } catch (localErr) {
+      console.debug('fetchUsageAverageFromAPI: local proxy failed, trying external api, reason:', localErr && localErr.message);
+      const externalUrl = 'https://huaroa-production.up.railway.app/status/usage-average?period=all%20|%20ConvertTo-Json%20-Depth%205';
+      res = await fetch(externalUrl, { cache: 'no-store' });
+      console.debug('fetchUsageAverageFromAPI: external fetch response status', res.status, res.statusText);
+      if (!res.ok) throw new Error('External network response was not ok');
+    }
+
+    const json = await res.json();
+    console.debug('fetchUsageAverageFromAPI: raw json', json);
+
+    if (!json || typeof json !== 'object') return null;
+
+    // ตัวอย่าง response: { totalHours: 0.0687, averageMinutes: 4.12345, ... }
+    // ให้ความสำคัญกับฟิลด์ `totalHours` ก่อน ตามที่ร้องขอ
+    let avg = json.totalHours ?? json.total_hours ?? null;
+    // ถ้าไม่มี totalHours ให้ fallback ไปหา averageMinutes เดิม (เพื่อความเข้ากันได้ย้อนหลัง)
+    if (avg == null) avg = json.averageMinutes ?? json.average_minutes ?? json.averageMinute ?? null;
+    if (avg == null) {
+      // บาง API อาจห่อด้วย data หรือ value
+      if (typeof json.data === 'object' && json.data !== null) {
+        avg = json.data.averageMinutes ?? json.data.average_minutes ?? null;
+      }
+    }
+
+    if (typeof avg === 'string') {
+      const parsed = Number(avg);
+      if (!Number.isNaN(parsed)) avg = parsed;
+    }
+
+    if (typeof avg === 'number' && !Number.isNaN(avg)) {
+      try { localStorage.setItem('totalHoursFromAPI', String(avg)); } catch (e) {}
+      return avg; // if this was averageMinutes fallback, it will be minutes — callers should treat returned value as hours when totalHours present; fallback handling in callers will convert minutes->hours if needed
+    }
+
+    return null;
+  } catch (err) {
+    console.debug('Error fetching usage-average from API:', err);
+    return null;
+  }
+}
+
+// ----- Active Users Polling (lightweight) -----
+// ฟังก์ชันอัปเดตค่า active users แบบครั้งเดียว (ไม่โหลด dashboard ทั้งหมด)
+function updateActiveUsersOnce() {
+  const activeElem = document.getElementById('activeUsers');
+  if (!activeElem) return;
+
+  // แสดงสถานะระหว่างรอผล
+  activeElem.textContent = 'กำลังโหลด...';
+
+  fetchActiveClientsFromAPI().then(count => {
+    if (typeof count === 'number') {
+      activeElem.textContent = count.toLocaleString();
+    } else {
+      // fallback: ถ้ามีค่าใน localStorage ให้ใช้
+      const stored = localStorage.getItem('activeClientsFromAPI');
+      if (stored !== null) {
+        activeElem.textContent = Number(stored).toLocaleString();
+      } else {
+        // ถ้าไม่มีค่า API เลย ให้ใช้ค่า local จาก analytics
+        const analytics = new AnalyticsSystem();
+        const data = analytics.getAnalytics();
+        const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
+        activeElem.textContent = uniquePlayers;
+      }
+    }
+    try { activeElem.setAttribute('data-last-active-update', new Date().toISOString()); } catch(e){}
+  }).catch(err => {
+    console.debug('updateActiveUsersOnce failed:', err);
+    // ในกรณี error ให้ใช้ fallback local
+    const analytics = new AnalyticsSystem();
+    const data = analytics.getAnalytics();
+    const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
+    activeElem.textContent = uniquePlayers;
+    try { activeElem.setAttribute('data-last-active-update', new Date().toISOString()); } catch(e){}
+  });
+}
+
+function startActiveUsersPolling(seconds = activeUsersPollSeconds) {
+  stopActiveUsersPolling();
+  activeUsersPollSeconds = seconds;
+  // เรียกครั้งแรกทันที
+  updateActiveUsersOnce();
+  activeUsersIntervalId = setInterval(() => {
+    updateActiveUsersOnce();
+  }, seconds * 1000);
+}
+
+function stopActiveUsersPolling() {
+  if (activeUsersIntervalId) {
+    clearInterval(activeUsersIntervalId);
+    activeUsersIntervalId = null;
+  }
+}
+
+/*
+Alternative approaches:
+- WebSocket or Server-Sent Events (SSE): push updates from server to clients in real-time.
+- Long-polling: client requests and server holds the request until update is available.
+- Polling (implemented here): simplest to implement and works without server changes.
+*/
+
+function showLogin() {
+  document.getElementById('loginModal').style.display = 'flex';
+  document.getElementById('dashboardContainer').style.display = 'none';
+  document.getElementById('passwordInput').focus();
+}
+
+function showDashboard() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('dashboardContainer').style.display = 'block';
+}
+
+function checkPassword() {
+  const password = document.getElementById('passwordInput').value;
+  const errorMsg = document.getElementById('errorMessage');
+  
+  if (password === ANALYTICS_PASSWORD) {
+    // บันทึกการเข้าสู่ระบบ
+    localStorage.setItem(AUTH_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      authenticated: true
+    }));
+    
+    errorMsg.textContent = '';
+    document.getElementById('passwordInput').value = '';
+    showDashboard();
+    
+    // โหลด Dashboard
+    const dashboard = new Dashboard();
+  } else {
+    errorMsg.textContent = '❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+    
+    // เขย่ากล่อง
+    const modal = document.getElementById('loginModal').firstElementChild;
+    modal.style.animation = 'shake 0.5s';
+    setTimeout(() => {
+      modal.style.animation = '';
+    }, 500);
+  }
+}
+
+function logout() {
+  stopAutoRefresh(); // หยุดการรีเฟรชอัตโนมัติ
+  stopActiveUsersPolling(); // หยุด polling ค่า active users
+  localStorage.removeItem(AUTH_KEY);
+  window.location.reload();
+}
+
+// เพิ่ม CSS สำหรับ animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+  
+  #passwordInput:focus {
+    border-color: #667eea;
+    outline: none;
+  }
+  
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+`;
+document.head.appendChild(style);
+
+// ตรวจสอบการเข้าสู่ระบบเมื่อโหลดหน้า
+checkAuth();
+
+// ระบบติดตามการใช้งาน (สำหรับหน้า Analytics - ไม่ติดตามตัวเอง)
+class AnalyticsSystem {
+  constructor() {
+    this.storageKey = 'websiteAnalytics';
+    this.sessionKey = 'currentSession';
+    // ไม่เรียก init() เพราะหน้านี้เป็นหน้าดูข้อมูลเท่านั้น ไม่ต้องบันทึกการเข้าชม
+  }
+
+  init() {
+    // ปิดการติดตามสำหรับหน้า analytics
+    // this.trackPageView();
+    // this.trackSession();
+    // this.setupBeforeUnload();
+  }
+
+  // บันทึกการเข้าชมหน้าเว็บ (ไม่ใช้ในหน้านี้)
+  trackPageView() {
+    // ปิดการทำงานในหน้า analytics
+    return;
+  }
+
+  // ติดตาม Session (ไม่ใช้ในหน้านี้)
+  trackSession() {
+    // ปิดการทำงานในหน้า analytics
+    return;
+  }
+
+  // บันทึกการเล่นเกม
+  trackGamePlay(gameType, playerName, teamName, teamColor, score, duration) {
+    const analytics = this.getAnalytics();
+    
+    if (!analytics.gamePlays) analytics.gamePlays = [];
+    
+    const gamePlay = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      gameType: gameType,
+      playerName: playerName,
+      teamName: teamName,
+      teamColor: teamColor,
+      score: score,
+      duration: duration // ในวินาที
+    };
+    
+    analytics.gamePlays.push(gamePlay);
+    analytics.totalGames = (analytics.totalGames || 0) + 1;
+    
+    // คำนวณเวลาใช้งานเฉลี่ย
+    const totalDuration = analytics.gamePlays.reduce((sum, play) => sum + (play.duration || 0), 0);
+    analytics.avgDuration = Math.round(totalDuration / analytics.gamePlays.length);
+    
+    this.saveAnalytics(analytics);
+  }
+
+  // บันทึกเวลาออกจากเว็บ (ไม่ใช้ในหน้านี้)
+  setupBeforeUnload() {
+    // ปิดการทำงานในหน้า analytics
+    return;
+  }
+
+  getAnalytics() {
+    const data = localStorage.getItem(this.storageKey);
+    return data ? JSON.parse(data) : {};
+  }
+
+  saveAnalytics(data) {
+    localStorage.setItem(this.storageKey, JSON.stringify(data));
+  }
+
+  clearAnalytics() {
+    localStorage.removeItem(this.storageKey);
+  }
+}
+
+// Dashboard
+class Dashboard {
+  constructor() {
+    this.analytics = new AnalyticsSystem();
+    this.charts = {};
+    this.refreshTimer = null;
+    this.isRefreshing = false;
+    this.loadDashboard();
+  }
+
+  loadDashboard() {
+    if (this.isRefreshing) return; // ป้องกันการโหลดซ้ำ
+    
+    this.isRefreshing = true;
+    let data = this.analytics.getAnalytics();
+    
+    // กรองข้อมูลตามวันที่ที่เลือก
+    data = filterDataByDate(data);
+    
+    // อัปเดต Stats Cards
+    this.updateStatsCards(data);
+    
+    // ทำลาย Charts เก่าก่อนสร้างใหม่
+    this.destroyCharts();
+    
+    // สร้าง Charts ใหม่
+    this.createCharts(data);
+    
+    // อัปเดตตาราง
+    this.updateActivityTable(data);
+    
+    // อัปเดตเวลา
+    this.updateLastUpdateTime();
+    
+    this.isRefreshing = false;
+  }
+
+  destroyCharts() {
+    Object.keys(this.charts).forEach(key => {
+      if (this.charts[key]) {
+        this.charts[key].destroy();
+      }
+    });
+    this.charts = {};
+  }
+
+  updateLastUpdateTime() {
+    // แสดงวันเดือนปีและเวลาในโซนเวลา UTC+7 (Asia/Bangkok)
+    const now = new Date();
+    const opts = { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const dt = new Intl.DateTimeFormat('th-TH', opts).format(now);
+    const el = document.getElementById('lastUpdate');
+    if (el) {
+      el.textContent = 'อัปเดตล่าสุด: ' + dt;
+      console.log('Updated #lastUpdate:', dt);
+    } else {
+      console.warn('#lastUpdate element not found in DOM');
+    }
+  }
+
+  updateStatsCards(data) {
+    // ยอดเข้าชม
+    const totalVisitsElem = document.getElementById('totalVisits');
+    // แสดงค่าจาก local เป็นค่าเริ่มต้นก่อน
+    totalVisitsElem.textContent = (data.totalVisits || 0).toLocaleString();
+
+    // พยายามดึงค่า distinct clients จาก API /status/active-clients และใช้เป็นค่าหลักเมื่อได้
+    fetchDistinctClientsFromAPI().then(count => {
+      console.debug('updateStatsCards: localTotal=', data.totalVisits, ' distinctApi=', count);
+      if (typeof count === 'number') {
+        totalVisitsElem.textContent = count.toLocaleString();
+        try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'api'); } catch(e){}
+      } else {
+        try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'local'); } catch(e){}
+      }
+    }).catch(err => {
+      console.debug('fetchDistinctClientsFromAPI failed:', err);
+      try { totalVisitsElem.setAttribute('data-last-total-visits-source', 'local'); } catch(e){}
+    });
+    
+    // จำนวนเกม
+    document.getElementById('totalGames').textContent = (data.totalGames || 0).toLocaleString();
+    
+    // เวลาเฉลี่ย: ใช้ค่า `totalHours` จาก API (ชั่วโมง, 2 ตำแหน่งทศนิยม) เป็นหลัก
+    const avgElem = document.getElementById('avgTime');
+    // แสดงสถานะระหว่างรอผล
+    avgElem.textContent = 'กำลังโหลด...';
+
+    fetchUsageAverageFromAPI().then(avg => {
+      if (typeof avg === 'number') {
+        // API ส่งค่าเป็นชั่วโมง (totalHours) -> แสดงทศนิยม 2 ตำแหน่ง
+        avgElem.textContent = Number(avg).toFixed(2);
+        try { avgElem.setAttribute('data-last-avg-source', 'api'); } catch(e){}
+      } else {
+        // fallback: คำนวณจาก local data (avgDuration เป็นวินาที) แปลงเป็นชั่วโมง
+        const localAvgHours = (data.avgDuration || 0) / 3600;
+        avgElem.textContent = Number(localAvgHours).toFixed(2);
+        try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
+      }
+    }).catch(err => {
+      console.debug('fetchUsageAverageFromAPI failed:', err);
+      const localAvgHours = (data.avgDuration || 0) / 3600;
+      avgElem.textContent = Number(localAvgHours).toFixed(2);
+      try { avgElem.setAttribute('data-last-avg-source', 'local'); } catch(e){}
+    });
+    
+    // Active Users (ค่าจะแสดงจาก API `activeClients` เป็นหลัก)
+    const uniquePlayers = new Set((data.gamePlays || []).map(p => p.playerName)).size;
+    const activeElem = document.getElementById('activeUsers');
+    // แสดงสถานะระหว่างรอผลจาก API
+    activeElem.textContent = 'กำลังโหลด...';
+
+    // เรียก API และใช้ค่าจาก `activeClients` เสมอเมื่อมี (แม้เป็น 0)
+    fetchActiveClientsFromAPI().then(count => {
+        console.debug('updateStatsCards: uniquePlayers=', uniquePlayers, ' apiCount=', count);
+      if (typeof count === 'number') {
+        activeElem.textContent = count.toLocaleString();
+      } else {
+        // ถ้า API ไม่มีค่า ให้แสดง fallback จาก local
+        activeElem.textContent = uniquePlayers;
+      }
+        // บันทึก log สั้น ๆ ใน DOM (data- attribute) เพื่อให้ตรวจสอบได้จาก DevTools elements
+        try { activeElem.setAttribute('data-last-updated', new Date().toISOString()); } catch(e){}
+    }).catch(err => {
+      console.debug('fetchActiveClientsFromAPI failed:', err);
+      activeElem.textContent = uniquePlayers;
+        try { activeElem.setAttribute('data-last-updated', new Date().toISOString()); } catch(e){}
+    });
+  }
+
+  createCharts(data) {
+    this.createGameTypeChart(data);
+    this.createDailyUsageChart(data);
+    this.createAvgTimeChart(data);
+    this.createTopPlayersChart(data);
+  }
+
+  createGameTypeChart(data) {
+    const gamePlays = data.gamePlays || [];
+    const gameTypes = {};
+    
+    gamePlays.forEach(play => {
+      gameTypes[play.gameType] = (gameTypes[play.gameType] || 0) + 1;
+    });
+    
+    const ctx = document.getElementById('gameTypeChart').getContext('2d');
+    this.charts.gameType = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(gameTypes).map(type => type === 'math' ? 'วิชาคณิตศาสตร์' : 'วิชาทั่วไป'),
+        datasets: [{
+          data: Object.values(gameTypes),
+          backgroundColor: ['#667eea', '#764ba2', '#2ecc71', '#f39c12'],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  createDailyUsageChart(data) {
+    const dailyVisits = data.dailyVisits || {};
+    const last7Days = this.getLast7Days();
+
+    const gamemathData = last7Days.map(date => dailyVisits.math?.[date] || 0);
+    const gamepictureData = last7Days.map(date => dailyVisits.picture?.[date] || 0);
+    const gamethaiData = last7Days.map(date => dailyVisits.thai?.[date] || 0);
+
+    const ctx = document.getElementById('dailyUsageChart').getContext('2d');
+    this.charts.dailyUsage = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: last7Days,
+        datasets: [
+          {
+            label: 'โหมดตัวเลข',
+            data: gamemathData,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'โหมดทั่วไป',
+            data: gamepictureData,
+            backgroundColor: 'rgba(153, 102, 255, 0.6)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'โหมดภาษาไทย',
+            data: gamethaiData,
+            backgroundColor: 'rgba(255, 159, 64, 0.6)',
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'จำนวนการใช้งานย้อนหลัง 7 วัน',
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+          },
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  createAvgTimeChart(data) {
+    const gamePlays = data.gamePlays || [];
+    const avgTimeByGame = {};
+    const countByGame = {};
+    
+    gamePlays.forEach(play => {
+      if (!avgTimeByGame[play.gameType]) {
+        avgTimeByGame[play.gameType] = 0;
+        countByGame[play.gameType] = 0;
+      }
+      avgTimeByGame[play.gameType] += play.duration || 0;
+      countByGame[play.gameType]++;
+    });
+    
+    const labels = [];
+    const values = [];
+    
+    Object.keys(avgTimeByGame).forEach(gameType => {
+      labels.push(gameType === 'math' ? 'วิชาคณิตศาสตร์' : 'วิชาทั่วไป');
+      // convert average duration (seconds) -> hours, keep two decimals for display in chart
+      const hours = avgTimeByGame[gameType] / countByGame[gameType] / 3600;
+      values.push(Number(hours.toFixed(2)));
+    });
+    
+    const ctx = document.getElementById('avgTimeChart').getContext('2d');
+    this.charts.avgTime = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'เวลาเฉลี่ย (ชั่วโมง)',
+          data: values,
+          backgroundColor: ['#667eea', '#764ba2'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  createTopPlayersChart(data) {
+    const gamePlays = data.gamePlays || [];
+    const playerStats = {};
+    
+    gamePlays.forEach(play => {
+      if (!playerStats[play.playerName]) {
+        playerStats[play.playerName] = 0;
+      }
+      playerStats[play.playerName]++;
+    });
+    
+    const sorted = Object.entries(playerStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    
+    const ctx = document.getElementById('topPlayersChart').getContext('2d');
+    this.charts.topPlayers = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: sorted.map(([name]) => name),
+        datasets: [{
+          label: 'จำนวนครั้งที่ทดสอบ',
+          data: sorted.map(([, count]) => count),
+          backgroundColor: '#2ecc71',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  updateActivityTable(data) {
+    const gamePlays = (data.gamePlays || []).slice().reverse().slice(0, 20);
+    const tbody = document.getElementById('activityTableBody');
+    
+    if (gamePlays.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">ยังไม่มีข้อมูลการเล่นเกม</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = gamePlays.map(play => {
+      const time = new Date(play.timestamp);
+      const timeStr = `${time.toLocaleDateString('th-TH')} ${time.toLocaleTimeString('th-TH')}`;
+      const gameLabel = play.gameType === 'math' ? 'วิชาคณิตศาสตร์' : 'วิชาทั่วไป';
+      const badgeClass = play.gameType === 'math' ? 'badge-math' : 'badge-picture';
+      const durationMin = Math.round(play.duration / 60);
+      
+      return `
+        <tr>
+          <td>${timeStr}</td>
+          <td><strong>${play.playerName || 'ไม่ระบุ'}</strong></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:20px; height:20px; border-radius:50%; background:${play.teamColor || '#999'}; border:2px solid #333;"></div>
+              <span>${play.teamName || 'ไม่ระบุ'}</span>
+            </div>
+          </td>
+          <td><span class="badge ${badgeClass}">${gameLabel}</span></td>
+          <td><strong>${play.score || 0}</strong></td>
+          <td>${durationMin} นาที</td>
+          <td class="status-completed">✓ เสร็จสิ้น</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  getLast7Days() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      days.push(date.toISOString().split('T')[0]);
+    }
+    return days;
+  }
+}
+
+// ฟังก์ชัน Export ข้อมูล
+function exportData() {
+  const analytics = new AnalyticsSystem();
+  const data = analytics.getAnalytics();
+  
+  const dataStr = JSON.stringify(data, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `analytics_${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  
+  URL.revokeObjectURL(url);
+}
+
+// ล้างข้อมูลทั้งหมด
+function clearAllData() {
+  if (confirm('คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+    const analytics = new AnalyticsSystem();
+    analytics.clearAnalytics();
+    location.reload();
+  }
+}
+
+// Dashboard จะถูกสร้างหลังจาก login สำเร็จแล้ว
+let dashboardInstance = null;
+let refreshIntervalId = null;
+let refreshIntervalSeconds = 10;
+// Separate polling for active users (lightweight)
+let activeUsersIntervalId = null;
+let activeUsersPollSeconds = 10; // default 10 seconds
+
+const apiBaseUrl = 'https://dashboard-production-2af3.up.railway.app/api'; // URL ของ Railway
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // กำหนดค่าเริ่มต้นเป็นวันที่ปัจจุบันเสมอเมื่อโหลดหน้าเว็บ
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0]; // รูปแบบ YYYY-MM-DD
+
+      const datePicker = document.getElementById('datePicker');
+      if (datePicker) {
+        datePicker.value = formattedDate; // ตั้งค่าเริ่มต้นเป็นวันที่ปัจจุบัน
+
+        // เพิ่ม event listener เพื่อดึงข้อมูลเมื่อเปลี่ยนวันที่
+        datePicker.addEventListener('change', async (event) => {
+          const selectedDate = event.target.value;
+          await fetchAndUpdateData(selectedDate);
+        });
+      }
+
+      // ดึงข้อมูลครั้งแรกด้วยวันที่ปัจจุบัน
+      await fetchAndUpdateData(formattedDate);
+    } catch (error) {
+      console.error('Error initializing datepicker or fetching data:', error);
+    }
+  });
+
+  async function fetchAndUpdateData(date) {
+    try {
+      console.log(`Fetching data for date: ${date}`); // Debugging log
+
+      // ดึงข้อมูลจาก API gamemath
+      const gameMathResponse = await fetch(`${apiBaseUrl}/usage-gamemath?date=${date}`);
+      const gameMathData = await gameMathResponse.json();
+      console.log(`Data from usage-gamemath on ${date}:`, gameMathData);
+
+      if (gameMathData.success) {
+        const totalVisitsElement = document.getElementById('totalVisits');
+        totalVisitsElement.textContent = gameMathData.count || 0;
+      }
+
+      // ดึงข้อมูลจาก API gamepicture
+      const gamePictureResponse = await fetch(`${apiBaseUrl}/usage-gamepicture?date=${date}`);
+      const gamePictureData = await gamePictureResponse.json();
+      console.log(`Data from usage-gamepicture on ${date}:`, gamePictureData);
+
+      if (gamePictureData.success && Array.isArray(gamePictureData.data)) {
+        const avgTimeElement = document.getElementById('avgTime');
+        avgTimeElement.textContent = gamePictureData.data.reduce((sum, item) => sum + item.count, 0);
+      } else {
+        console.error('Invalid data format for gamePictureData:', gamePictureData);
+        const avgTimeElement = document.getElementById('avgTime');
+        avgTimeElement.textContent = gamePictureData.count || 0; // ใช้ count หากไม่มี data array
+      }
+
+      // ดึงข้อมูลจาก API gamethai
+      const gameThaiResponse = await fetch(`${apiBaseUrl}/usage-gamethai?date=${date}`);
+      const gameThaiData = await gameThaiResponse.json();
+      console.log(`Data from usage-gamethai on ${date}:`, gameThaiData);
+
+      if (gameThaiData.success && Array.isArray(gameThaiData.data)) {
+        const activeUsersElement = document.getElementById('activeUsers');
+        activeUsersElement.textContent = gameThaiData.data.reduce((sum, item) => sum + item.count, 0);
+      } else {
+        console.error('Invalid data format for gameThaiData:', gameThaiData);
+        const activeUsersElement = document.getElementById('activeUsers');
+        activeUsersElement.textContent = gameThaiData.count || 0; // ใช้ count หากไม่มี data array
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const fetchUsageData = async (api, date) => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/${api}?date=${date}`);
+        const data = await response.json();
+        console.log(`Data from ${api} on ${date}:`, data); // Debugging log
+
+        if (data.success) {
+          if (Array.isArray(data.data)) {
+            return data.data.length; // Use the length of the array as the count
+          }
+          return data.count || 0; // Fallback to count if available
+        }
+        return 0;
+      } catch (error) {
+        console.error(`Error fetching data from ${api}:`, error);
+        return 0;
+      }
+    };
+
+    const fetchLast7DaysData = async () => {
+      const today = new Date();
+      const labels = [];
+      const gamemathData = [];
+      const gamepictureData = [];
+      const gamethaiData = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const formattedDate = date.toISOString().split("T")[0];
+        labels.push(formattedDate);
+
+        gamemathData.push(await fetchUsageData("usage-gamemath", formattedDate));
+        gamepictureData.push(await fetchUsageData("usage-gamepicture", formattedDate));
+        gamethaiData.push(await fetchUsageData("usage-gamethai", formattedDate));
+      }
+
+      console.log("Labels:", labels);
+      console.log("Game Math Data:", gamemathData);
+      console.log("Game Picture Data:", gamepictureData);
+      console.log("Game Thai Data:", gamethaiData);
+
+      return { labels, gamemathData, gamepictureData, gamethaiData };
+    };
+
+    const renderChart = async () => {
+      const { labels, gamemathData, gamepictureData, gamethaiData } = await fetchLast7DaysData();
+
+      const ctx = document.getElementById("dailyUsageChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "โหมดตัวเลข",
+              data: gamemathData,
+              backgroundColor: "rgba(75, 192, 192, 0.6)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+            {
+              label: "โหมดทั่วไป",
+              data: gamepictureData,
+              backgroundColor: "rgba(153, 102, 255, 0.6)",
+              borderColor: "rgba(153, 102, 255, 1)",
+              borderWidth: 1,
+            },
+            {
+              label: "โหมดภาษาไทย",
+              data: gamethaiData,
+              backgroundColor: "rgba(255, 159, 64, 0.6)",
+              borderColor: "rgba(255, 159, 64, 1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "จำนวนการใช้งานย้อนหลัง 7 วัน",
+            },
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+            },
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    };
+
+    renderChart();
+  });
+</script>
+
+</body>
+</html>
