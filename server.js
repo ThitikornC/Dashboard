@@ -463,6 +463,89 @@ app.get('/api/usage-gamethai', async (req, res) => {
   }
 });
 
+// API สำหรับ usage_studio_ (นับจาก field start_at)
+app.get('/api/usage-studio', async (req, res) => {
+  console.log('API /api/usage-studio called');
+  try {
+    const client = await getMongoClient();
+    if (!client) {
+      console.error('MongoDB connection failed');
+      return res.status(500).json({ success: false, message: 'MongoDB connection failed' });
+    }
+
+    const db = client.db(process.env.MONGODB_DB || 'Huroa2');
+    const coll = db.collection('usage_studio_');
+
+    const { date } = req.query;
+    let startOfDay, endOfDay;
+
+    if (date) {
+      const targetDate = new Date(date);
+      startOfDay = new Date(targetDate);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+
+      endOfDay = new Date(targetDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+    } else {
+      const today = new Date();
+      startOfDay = new Date(today);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+
+      endOfDay = new Date(today);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+    }
+
+    console.log(`Filtering studio data between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
+
+    const dateStr = startOfDay.toISOString().split('T')[0];
+
+    // Pipeline รองรับ field: start_at, created_at, timestamp, day
+    const pipeline = [
+      {
+        $addFields: {
+          tsDate: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $type: '$start_at' }, 'date'] }, then: '$start_at' },
+                { case: { $eq: [{ $type: '$start_at' }, 'string'] }, then: { $toDate: '$start_at' } },
+                { case: { $eq: [{ $type: '$timestamp' }, 'date'] }, then: '$timestamp' },
+                { case: { $eq: [{ $type: '$timestamp' }, 'string'] }, then: { $toDate: '$timestamp' } },
+                { case: { $eq: [{ $type: '$created_at' }, 'date'] }, then: '$created_at' },
+                { case: { $eq: [{ $type: '$created_at' }, 'string'] }, then: { $toDate: '$created_at' } }
+              ],
+              default: null
+            }
+          },
+          dayField: '$day'
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { dayField: dateStr },
+            { tsDate: { $gte: startOfDay, $lte: endOfDay } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: { $ifNull: ['$count', 1] } }
+        }
+      }
+    ];
+
+    const data = await coll.aggregate(pipeline).toArray();
+    const count = data.length > 0 && data[0].count ? data[0].count : 0;
+
+    console.log('Filtered and grouped data for usage_studio_:', data);
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('Error fetching and processing data for usage_studio_:', error);
+    res.status(500).json({ success: false, message: 'Error fetching and processing data for usage_studio_' });
+  }
+});
+
 // API ชั่วคราวสำหรับดึงข้อมูลจาก collection usage_gamemath_html
 app.get('/api/test-collection', async (req, res) => {
   console.log('API /api/test-collection called');
