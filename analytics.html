@@ -643,9 +643,17 @@ class Dashboard {
         scales: {
           x: {
             beginAtZero: true,
+            title: {
+              display: true,
+              text: 'วันที่'
+            }
           },
           y: {
             beginAtZero: true,
+            title: {
+              display: true,
+              text: 'จำนวนผู้เข้าใช้'
+            }
           },
         },
       },
@@ -1100,9 +1108,17 @@ const renderChart = async (customData = null) => {
       scales: {
         x: {
           beginAtZero: true,
+          title: {
+            display: true,
+            text: 'วันที่'
+          }
         },
         y: {
           beginAtZero: true,
+          title: {
+            display: true,
+            text: 'จำนวนผู้เข้าใช้'
+          }
         },
       },
     },

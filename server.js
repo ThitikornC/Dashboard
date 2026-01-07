@@ -77,6 +77,7 @@ app.use((req, res, next) => {
 let feedbackList = [];
 
 app.get("/", (req, res) => {
+  // Serve the analytics dashboard directly at root instead of the landing page
   res.sendFile(path.join(__dirname, "index-analytics.html"));
 });
 
@@ -747,5 +748,5 @@ app.get('/api/debug-usage-docs', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000; // Changed default port to 4000
+const PORT = process.env.PORT || 3000; // Default port set to 3000 for local dev
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
